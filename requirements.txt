@@ -1,0 +1,10 @@
+gunicorn
+Flask
+PyMySQL
+peewee
+flask-peewee
+redis
+qiniu
+requests
+xmltodict
+celery
