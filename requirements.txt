@@ -2,9 +2,8 @@ gunicorn
 Flask
 PyMySQL
 peewee
-flask-peewee
 redis
 qiniu
 requests
 xmltodict
-celery
+celery>=4.0,<5.0
