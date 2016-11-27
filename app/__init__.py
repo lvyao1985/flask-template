@@ -22,12 +22,12 @@ def create_app(config_name):
     config[config_name].init_app(app)
     db.init(**app.config['MYSQL'])
 
-    from .models import Admin
-    db.create_tables([Admin], safe=True)
+    from .models import models
+    db.create_tables(models, safe=True)
 
-    from .hooks import connect_db, close_db
-    app.before_request(connect_db)
-    app.teardown_request(close_db)
+    from .hooks import before_app_request, after_app_request
+    app.before_request(before_app_request)
+    app.teardown_request(after_app_request)
 
     from .misc import url_for_each_page
     app.jinja_env.globals['url_for_each_page'] = url_for_each_page

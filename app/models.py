@@ -26,3 +26,6 @@ class Admin(BaseModel):
     """
     class Meta:
         db_table = 'admin'
+
+
+models = [Admin]
