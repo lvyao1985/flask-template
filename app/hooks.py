@@ -1,8 +1,17 @@
 # -*- coding: utf-8 -*-
 
-from flask import request, g, abort
+from flask import request, g, abort, jsonify
 
 from . import db
+
+
+def handle_api_exception(e):
+    """
+    处理APIException异常
+    :param e:
+    :return:
+    """
+    return jsonify(e.to_dict()), e.status_code
 
 
 def before_app_request():

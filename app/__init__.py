@@ -25,7 +25,9 @@ def create_app(config_name):
     from .models import models
     db.create_tables(models, safe=True)
 
-    from .hooks import before_app_request, after_app_request
+    from .exceptions import APIException
+    from .hooks import handle_api_exception, before_app_request, after_app_request
+    app.register_error_handler(APIException, handle_api_exception)
     app.before_request(before_app_request)
     app.teardown_request(after_app_request)
 

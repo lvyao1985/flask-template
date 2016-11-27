@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
 
-from flask import request, url_for
+from flask import request, url_for, jsonify
+
+
+def api_success_response(data):
+    """
+    API请求成功的响应
+    :param data: [dict]
+    :return:
+    """
+    return jsonify({'code': 0, 'message': 'Success', 'data': data})
 
 
 def url_for_each_page(page):
