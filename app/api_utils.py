@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import numbers
+
 from flask import jsonify
 
 
@@ -7,7 +9,16 @@ __all__ = [
     'APIException',
     'handle_api_exception',
     'handle_500',
-    'success_response'
+    'success_response',
+    'claim_args',
+    'claim_args_true',
+    'claim_args_bool',
+    'claim_args_string',
+    'claim_args_digits_string',
+    'claim_args_int',
+    'claim_args_number',
+    'claim_args_list',
+    'claim_args_dict'
 ]
 
 
@@ -71,3 +82,57 @@ def success_response(data):
     :return:
     """
     return jsonify({'code': 0, 'message': 'Success', 'data': data})
+
+
+def claim_args(code, *args):
+    for arg in args:
+        if not (arg or isinstance(arg, (numbers.Number, bool))):
+            raise APIException(code)
+
+
+def claim_args_true(code, *args):
+    for arg in args:
+        if not arg:
+            raise APIException(code)
+
+
+def claim_args_bool(code, *args):
+    for arg in args:
+        if not isinstance(arg, bool):
+            raise APIException(code)
+
+
+def claim_args_string(code, *args):
+    for arg in args:
+        if not isinstance(arg, basestring):
+            raise APIException(code)
+
+
+def claim_args_digits_string(code, *args):
+    for arg in args:
+        if not (isinstance(arg, basestring) and arg.isdigit()):
+            raise APIException(code)
+
+
+def claim_args_int(code, *args):
+    for arg in args:
+        if not isinstance(arg, int):
+            raise APIException(code)
+
+
+def claim_args_number(code, *args):
+    for arg in args:
+        if not isinstance(arg, numbers.Real):
+            raise APIException(code)
+
+
+def claim_args_list(code, *args):
+    for arg in args:
+        if not isinstance(arg, list):
+            raise APIException(code)
+
+
+def claim_args_dict(code, *args):
+    for arg in args:
+        if not isinstance(arg, dict):
+            raise APIException(code)
