@@ -3,7 +3,7 @@ Flask
 PyMySQL
 peewee
 redis
-qiniu
 requests
+qiniu
 xmltodict
 celery>=4.0,<5.0

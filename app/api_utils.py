@@ -1,5 +1,15 @@
 # -*- coding: utf-8 -*-
 
+from flask import jsonify
+
+
+__all__ = [
+    'APIException',
+    'handle_api_exception',
+    'handle_500',
+    'success_response'
+]
+
 
 class APIException(Exception):
     """
@@ -33,3 +43,31 @@ class APIException(Exception):
         :return:
         """
         return {'code': self.code, 'message': self.message, 'data': {}}
+
+
+def handle_api_exception(e):
+    """
+    处理APIException
+    :param e:
+    :return:
+    """
+    return jsonify(e.to_dict()), e.status_code
+
+
+def handle_500(e):
+    """
+    处理500错误
+    :param e:
+    :return:
+    """
+    e = APIException(1000)
+    return jsonify(e.to_dict()), e.status_code
+
+
+def success_response(data):
+    """
+    请求成功的响应
+    :param data: [dict]
+    :return:
+    """
+    return jsonify({'code': 0, 'message': 'Success', 'data': data})
