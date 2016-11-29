@@ -2,13 +2,16 @@
 
 import numbers
 
-from flask import jsonify
+from flask import current_app, request, g, jsonify
+from werkzeug.exceptions import BadRequest
 
 
 __all__ = [
     'APIException',
     'handle_api_exception',
+    'handle_400',
     'handle_500',
+    'before_api_request',
     'success_response',
     'claim_args',
     'claim_args_true',
@@ -65,6 +68,16 @@ def handle_api_exception(e):
     return jsonify(e.to_dict()), e.status_code
 
 
+def handle_400(e):
+    """
+    处理400错误
+    :param e:
+    :return:
+    """
+    e = APIException(1100)
+    return jsonify(e.to_dict()), e.status_code
+
+
 def handle_500(e):
     """
     处理500错误
@@ -73,6 +86,20 @@ def handle_500(e):
     """
     e = APIException(1000)
     return jsonify(e.to_dict()), e.status_code
+
+
+def before_api_request():
+    """
+    API请求前钩子函数
+    :return:
+    """
+    if request.method in ['POST', 'PUT']:
+        if not request.is_json:
+            raise BadRequest
+        g.json = request.get_json()  # g.json
+        current_app.logger.info(u'JSON: %s' % g.json)
+    fields = request.args.get('fields')
+    g.fields = fields.split(',') if fields else None  # g.fields
 
 
 def success_response(data):
