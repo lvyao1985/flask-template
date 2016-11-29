@@ -6,4 +6,4 @@ def before_request():
     请求前钩子函数
     :return:
     """
-    pass
+    pass  # TODO

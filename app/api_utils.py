@@ -8,9 +8,9 @@ from flask import current_app, request, g, abort, jsonify
 __all__ = [
     'APIException',
     'handle_api_exception',
-    'handle_400',
-    'handle_401',
-    'handle_500',
+    'handle_400_error',
+    'handle_401_error',
+    'handle_500_error',
     'before_api_request',
     'api_success_response',
     'claim_args',
@@ -68,7 +68,7 @@ def handle_api_exception(e):
     return jsonify(e.to_dict()), e.status_code
 
 
-def handle_400(e):
+def handle_400_error(e):
     """
     处理400错误
     :param e:
@@ -78,7 +78,7 @@ def handle_400(e):
     return jsonify(e.to_dict()), e.status_code
 
 
-def handle_401(e):
+def handle_401_error(e):
     """
     处理401错误
     :param e:
@@ -88,7 +88,7 @@ def handle_401(e):
     return jsonify(e.to_dict()), e.status_code
 
 
-def handle_500(e):
+def handle_500_error(e):
     """
     处理500错误
     :param e:
