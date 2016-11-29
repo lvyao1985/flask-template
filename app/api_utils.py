@@ -2,17 +2,17 @@
 
 import numbers
 
-from flask import current_app, request, g, jsonify
-from werkzeug.exceptions import BadRequest
+from flask import current_app, request, g, abort, jsonify
 
 
 __all__ = [
     'APIException',
     'handle_api_exception',
     'handle_400',
+    'handle_401',
     'handle_500',
     'before_api_request',
-    'success_response',
+    'api_success_response',
     'claim_args',
     'claim_args_true',
     'claim_args_bool',
@@ -78,6 +78,16 @@ def handle_400(e):
     return jsonify(e.to_dict()), e.status_code
 
 
+def handle_401(e):
+    """
+    处理401错误
+    :param e:
+    :return:
+    """
+    e = APIException(1101)
+    return jsonify(e.to_dict()), e.status_code
+
+
 def handle_500(e):
     """
     处理500错误
@@ -95,16 +105,17 @@ def before_api_request():
     """
     if request.method in ['POST', 'PUT']:
         if not request.is_json:
-            raise BadRequest
+            abort(400)
+
         g.json = request.get_json()  # g.json
         current_app.logger.info(u'JSON: %s' % g.json)
     fields = request.args.get('fields')
     g.fields = fields.split(',') if fields else None  # g.fields
 
 
-def success_response(data):
+def api_success_response(data):
     """
-    请求成功的响应
+    API请求成功的响应
     :param data: [dict]
     :return:
     """
