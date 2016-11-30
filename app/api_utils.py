@@ -48,7 +48,7 @@ class APIException(Exception):
         Exception.__init__(self)
         self.code = code
         self.message = self.ERRORS.get(code)
-        if status_code is not None:
+        if isinstance(status_code, int):
             self.status_code = status_code
 
     def to_dict(self):
