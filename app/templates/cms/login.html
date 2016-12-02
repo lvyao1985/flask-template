@@ -1,0 +1,9 @@
+{% extends 'cms/_root.html' %}
+{% block title %}登录{% endblock %}
+{% block body %}
+    <form method="post">
+        <input type="text" placeholder="用户名" name="name" />
+        <input type="password" placeholder="密码" name="password" />
+        <button type="submit">登录</button>
+    </form>
+{% endblock %}

@@ -11,7 +11,7 @@ from . import db
 from .constants import DEFAULT_PER_PAGE
 
 
-_to_set = (lambda i: set(i) if i else set())
+_to_set = (lambda r: set(r) if r else set())
 _nullable_strip = (lambda s: s.strip() or None if s else None)
 
 
@@ -90,8 +90,7 @@ class BaseModel(Model):
                 _fields = cls._meta.fields
                 clauses = []
                 for item in order_by:
-                    desc = item.startswith('-')
-                    attr = item.lstrip('+-')
+                    desc, attr = item.startswith('-'), item.lstrip('+-')
                     if attr in cls._exclude_fields():
                         continue
                     if attr in cls._extra_attributes():

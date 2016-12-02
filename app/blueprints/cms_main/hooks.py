@@ -11,8 +11,8 @@ def before_request():
     请求前钩子函数
     :return:
     """
-    endpoint = request.endpoint.split('.')[-1]
     g.admin = Admin.query_by_id(session.get(CMS_ADMIN_SESSION_KEY))  # g.admin
+    endpoint = request.endpoint.split('.')[-1]
     if endpoint in ['login'] and g.admin:
         return redirect(url_for('.index'))
 

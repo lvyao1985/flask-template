@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="renderer" content="webkit">
+    <title>{% block title %}{% endblock %} | 管理后台</title>
+    {% include 'cms/_styles.html' %}
+</head>
+<body>
+{% block body %}{% endblock %}
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+        <div class="flash-message" data-category="{{ category }}" data-message="{{ message }}"></div>
+    {% endfor %}
+{% endwith %}
+{% include 'cms/_scripts.html' %}
+<script>
+    $(function () {
+        $('.flash-message').each(function (index) {
+            var message = $(this).data('message');
+            var category = $(this).data('category');
+            setTimeout(function () {
+                var status = 'info';
+                if (category == 'info') {
+                    status = 'success';
+                } else if (category == 'error') {
+                    status = 'danger';
+                }
+                UIkit.notify({
+                    message: message,
+                    status: status,
+                    pos: 'top-right',
+                    timeout: 2000
+                });
+            }, 300 * (index + 1));
+        });
+    });
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
