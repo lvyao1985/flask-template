@@ -70,6 +70,7 @@ def delete_objects(model):
     ids = ids.split(',')
     claim_args_digits_string(1602, *ids)
     objs = map(model.query_by_id, ids)
-    claim_args(1104, *objs)
-    map(lambda o: o.delete_instance(recursive=True), objs)
+    claim_args(1602, *objs)
+    for obj in objs:
+        obj.delete_instance(recursive=True)
     return api_success_response({})
