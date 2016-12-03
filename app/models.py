@@ -28,16 +28,16 @@ class BaseModel(Model):
         database = db
         only_save_dirty = True
 
-    @staticmethod
-    def _exclude_fields():
+    @classmethod
+    def _exclude_fields(cls):
         """
         转换为dict表示时排除在外的字段
         :return:
         """
         return {'create_time', 'update_time'}
 
-    @staticmethod
-    def _extra_attributes():
+    @classmethod
+    def _extra_attributes(cls):
         """
         转换为dict表示时额外增加的属性
         :return:
@@ -139,6 +139,22 @@ class BaseModel(Model):
             current_app.logger.error(e)
             return {}
 
+    def modified_fields(self, exclude=None):
+        """
+        与数据库中对应的数据相比，数值有变动的字段名称列表
+        :param exclude: [iterable or None]
+        :return:
+        """
+        try:
+            exclude = _to_set(exclude)
+            db_obj = self.query_by_id(self.id)
+            return filter(lambda f: getattr(self, f) != getattr(db_obj, f) and f not in exclude,
+                          self._meta.sorted_field_names)
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
     def change_weight(self, weight):
         """
         修改排序权重
@@ -176,12 +192,12 @@ class Admin(BaseModel):
     class Meta:
         db_table = 'admin'
 
-    @staticmethod
-    def _exclude_fields():
+    @classmethod
+    def _exclude_fields(cls):
         return BaseModel._exclude_fields() | {'password', 'last_login'}
 
-    @staticmethod
-    def _extra_attributes():
+    @classmethod
+    def _extra_attributes(cls):
         return BaseModel._extra_attributes() | {'iso_last_login'}
 
     @classmethod
