@@ -281,4 +281,141 @@ class Admin(BaseModel):
         return self.last_login.isoformat() if self.last_login else None
 
 
-models = [Admin]
+class WeixinUser(BaseModel):
+    """
+    微信用户
+    """
+    openid = CharField()
+    unionid = CharField(null=True)
+    nickname = CharField(null=True)
+    sex = IntegerField(null=True)
+    country = CharField(null=True)
+    province = CharField(null=True)
+    city = CharField(null=True)
+    headimgurl = CharField(null=True)
+    subscribe = IntegerField(null=True)
+    subscribe_time = IntegerField(null=True)
+    language = CharField(null=True)
+    remark = CharField(null=True)
+    groupid = IntegerField(null=True)
+    tagid_list = TextField(null=True)
+
+    class Meta:
+        db_table = 'weixin_user'
+
+    @classmethod
+    def _exclude_fields(cls):
+        return BaseModel._exclude_fields() | {'tagid_list'}
+
+    @classmethod
+    def _extra_attributes(cls):
+        return BaseModel._extra_attributes() | {'array_tagid_list'}
+
+    @classmethod
+    def query_by_openid(cls, openid):
+        """
+        根据openid查询
+        :param openid:
+        :return:
+        """
+        weixin_user = None
+        try:
+            weixin_user = cls.get(cls.openid == openid)
+        finally:
+            return weixin_user
+
+    @classmethod
+    def create_weixin_user(cls, openid, unionid=None, nickname=None, sex=None, country=None, province=None, city=None,
+                           headimgurl=None, subscribe=None, subscribe_time=None, language=None, remark=None,
+                           groupid=None, tagid_list=None, **kwargs):
+        """
+        创建微信用户
+        :param openid:
+        :param unionid:
+        :param nickname:
+        :param sex:
+        :param country:
+        :param province:
+        :param city:
+        :param headimgurl:
+        :param subscribe:
+        :param subscribe_time:
+        :param language:
+        :param remark:
+        :param groupid:
+        :param tagid_list: [iterable or None]
+        :param kwargs:
+        :return:
+        """
+        try:
+            return cls.create(
+                openid=openid.strip(),
+                unionid=_nullable_strip(unionid),
+                nickname=_nullable_strip(nickname),
+                sex=sex,
+                country=_nullable_strip(country),
+                province=_nullable_strip(province),
+                city=_nullable_strip(city),
+                headimgurl=_nullable_strip(headimgurl),
+                subscribe=subscribe,
+                subscribe_time=subscribe_time,
+                language=_nullable_strip(language),
+                remark=_nullable_strip(remark),
+                groupid=groupid,
+                tagid_list=','.join(map(str, tagid_list)) if tagid_list else None
+            )
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_weixin_user(self, subscribe, unionid=None, nickname=None, sex=None, country=None, province=None,
+                           city=None, headimgurl=None, subscribe_time=None, language=None, remark=None, groupid=None,
+                           tagid_list=None, **kwargs):
+        """
+        更新微信用户
+        :param subscribe:
+        :param unionid:
+        :param nickname:
+        :param sex:
+        :param country:
+        :param province:
+        :param city:
+        :param headimgurl:
+        :param subscribe_time:
+        :param language:
+        :param remark:
+        :param groupid:
+        :param tagid_list: [iterable or None]
+        :param kwargs:
+        :return:
+        """
+        try:
+            self.subscribe = subscribe
+            if subscribe:
+                self.unionid = _nullable_strip(unionid)
+                self.nickname = _nullable_strip(nickname)
+                self.sex = sex
+                self.country = _nullable_strip(country)
+                self.province = _nullable_strip(province)
+                self.city = _nullable_strip(city)
+                self.headimgurl = _nullable_strip(headimgurl)
+                self.subscribe_time = subscribe_time
+                self.language = _nullable_strip(language)
+                self.remark = _nullable_strip(remark)
+                self.groupid = groupid
+                self.tagid_list = ','.join(map(str, tagid_list)) if tagid_list else None
+            if self.modified_fields():
+                self.update_time = datetime.datetime.now()
+                self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def array_tagid_list(self):
+        return map(int, self.tagid_list.split(',')) if self.tagid_list else []
+
+
+models = [Admin, WeixinUser]
