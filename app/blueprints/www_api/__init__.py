@@ -15,3 +15,6 @@ bp_www_api.register_error_handler(401, handle_401_error)
 bp_www_api.register_error_handler(500, handle_500_error)
 bp_www_api.before_request(before_api_request)
 bp_www_api.before_request(before_request)
+
+
+from . import weixin

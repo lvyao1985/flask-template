@@ -23,6 +23,7 @@ def list_objects(model, mark='objects'):
     order_by, page, per_page = map(request.args.get, ('order_by', 'page', 'per_page'))
     order_by = order_by.split(',') if order_by else None
     claim_args_digits_string(1202, *filter(None, (page, per_page)))
+
     data = {
         mark: [obj.to_dict(g.fields) for obj in model.iterator(None, order_by, page, per_page)],
         'total': model.count()
@@ -40,6 +41,7 @@ def get_object(_id, model, mark='object'):
     """
     obj = model.query_by_id(_id)
     claim_args(1104, obj)
+
     data = {
         mark: obj.to_dict(g.fields)
     }
@@ -55,6 +57,7 @@ def delete_object(_id, model):
     """
     obj = model.query_by_id(_id)
     claim_args(1104, obj)
+
     obj.delete_instance(recursive=True)
     return api_success_response({})
 
@@ -71,6 +74,7 @@ def delete_objects(model):
     claim_args_digits_string(1602, *ids)
     objs = map(model.query_by_id, ids)
     claim_args(1602, *objs)
+
     for obj in objs:
         obj.delete_instance(recursive=True)
     return api_success_response({})

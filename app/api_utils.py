@@ -40,7 +40,9 @@ class APIException(Exception):
         1401: u'POST/PUT方法json数据不完整',
         1402: u'POST/PUT方法json数据值或类型不正确',
         1601: u'DELETE方法url参数不完整',
-        1602: u'DELETE方法url参数值不正确'
+        1602: u'DELETE方法url参数值不正确',
+        1801: u'微信access_token获取失败',
+        1802: u'微信jsapi_ticket获取失败'
     }
     status_code = 200
 
