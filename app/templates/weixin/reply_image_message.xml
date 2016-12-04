@@ -1,0 +1,9 @@
+<xml>
+    <ToUserName><![CDATA[{{ to_user }}]]></ToUserName>
+    <FromUserName><![CDATA[{{ from_user }}]]></FromUserName>
+    <CreateTime>{{ time }}</CreateTime>
+    <MsgType><![CDATA[image]]></MsgType>
+    <Image>
+        <MediaId><![CDATA[{{ media_id }}]]></MediaId>
+    </Image>
+</xml>
