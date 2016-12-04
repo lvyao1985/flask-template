@@ -41,6 +41,7 @@ class APIException(Exception):
         1402: u'POST/PUT方法json数据值或类型不正确',
         1601: u'DELETE方法url参数不完整',
         1602: u'DELETE方法url参数值不正确',
+        1800: u'微信公众平台接口调用失败',
         1801: u'微信access_token获取失败',
         1802: u'微信jsapi_ticket获取失败'
     }

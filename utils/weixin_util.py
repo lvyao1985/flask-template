@@ -64,6 +64,72 @@ def get_jsapi_ticket(wx):
     return jsapi_ticket
 
 
+def get_user_info(wx, openid):
+    """
+    获取微信用户基本信息
+    :param wx: [dict]
+    :param openid:
+    :return:
+    """
+    access_token = get_access_token(wx)
+    if not access_token:
+        return None
+
+    wx_url = 'https://api.weixin.qq.com/cgi-bin/user/info?access_token=%s&openid=%s&lang=zh_CN' % (access_token, openid)
+    resp = requests.get(wx_url)
+    resp.encoding = 'utf-8'
+    info = resp.json()
+    if info.get('errcode'):
+        return None
+
+    return info
+
+
+def get_user_info_with_authorization(wx, code):
+    """
+    获取微信用户基本信息（网页授权）
+    :param wx: [dict]
+    :param code:
+    :return:
+    """
+    app_id, app_secret = map(wx.get, ('app_id', 'app_secret'))
+    if not (app_id and app_secret):
+        return None
+
+    # 通过code换取网页授权access_token
+    wx_url = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid=%s&secret=%s&code=%s' \
+             '&grant_type=authorization_code' % (app_id, app_secret, code)
+    resp_json = requests.get(wx_url).json()
+    access_token, openid, refresh_token = map(resp_json.get, ('access_token', 'openid', 'refresh_token'))
+    if not (access_token and openid):
+        return None
+
+    # 检验access_token是否有效
+    wx_url = 'https://api.weixin.qq.com/sns/auth?access_token=%s&openid=%s' % (access_token, openid)
+    resp_json = requests.get(wx_url).json()
+    if resp_json.get('errcode'):
+        if not refresh_token:
+            return None
+
+        # 刷新access_token
+        wx_url = 'https://api.weixin.qq.com/sns/oauth2/refresh_token?appid=%s&grant_type=refresh_token' \
+                 '&refresh_token=%s' % (app_id, refresh_token)
+        resp_json = requests.get(wx_url).json()
+        access_token, openid = map(resp_json.get, ('access_token', 'openid'))
+        if not (access_token and openid):
+            return None
+
+    # 拉取用户信息
+    wx_url = 'https://api.weixin.qq.com/sns/userinfo?access_token=%s&openid=%s&lang=zh_CN' % (access_token, openid)
+    resp = requests.get(wx_url)
+    resp.encoding = 'utf-8'
+    info = resp.json()
+    if info.get('errcode'):
+        return None
+
+    return info
+
+
 def get_temp_image_media(wx, media_id):
     """
     获取微信临时图片素材
