@@ -13,15 +13,14 @@ def before_app_request():
     if not (request.blueprint and request.endpoint):
         abort(404)
 
-    environ = request.environ
-    g.ip = environ.get('HTTP_X_FORWARDED_FOR', environ.get('REMOTE_ADDR'))  # g.ip
+    g.ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR'))  # g.ip
     db.connect()
 
 
-def after_app_request(response):
+def after_app_request(resp):
     """
     请求后全局钩子函数
-    :param response:
+    :param resp:
     :return:
     """
     if not db.is_closed():

@@ -104,20 +104,20 @@ def get_user_info_with_authorization(wx, code):
     if not (access_token and openid):
         return None
 
-    # 检验access_token是否有效
-    wx_url = 'https://api.weixin.qq.com/sns/auth?access_token=%s&openid=%s' % (access_token, openid)
-    resp_json = requests.get(wx_url).json()
-    if resp_json.get('errcode'):
-        if not refresh_token:
-            return None
-
-        # 刷新access_token
-        wx_url = 'https://api.weixin.qq.com/sns/oauth2/refresh_token?appid=%s&grant_type=refresh_token' \
-                 '&refresh_token=%s' % (app_id, refresh_token)
-        resp_json = requests.get(wx_url).json()
-        access_token, openid = map(resp_json.get, ('access_token', 'openid'))
-        if not (access_token and openid):
-            return None
+    # # 检验access_token是否有效
+    # wx_url = 'https://api.weixin.qq.com/sns/auth?access_token=%s&openid=%s' % (access_token, openid)
+    # resp_json = requests.get(wx_url).json()
+    # if resp_json.get('errcode'):
+    #     if not refresh_token:
+    #         return None
+    #
+    #     # 刷新access_token
+    #     wx_url = 'https://api.weixin.qq.com/sns/oauth2/refresh_token?appid=%s&grant_type=refresh_token' \
+    #              '&refresh_token=%s' % (app_id, refresh_token)
+    #     resp_json = requests.get(wx_url).json()
+    #     access_token, openid = map(resp_json.get, ('access_token', 'openid'))
+    #     if not (access_token and openid):
+    #         return None
 
     # 拉取用户信息
     wx_url = 'https://api.weixin.qq.com/sns/userinfo?access_token=%s&openid=%s&lang=zh_CN' % (access_token, openid)

@@ -418,4 +418,12 @@ class WeixinUser(BaseModel):
         return map(int, self.tagid_list.split(',')) if self.tagid_list else []
 
 
-models = [Admin, WeixinUser]
+class User(BaseModel):
+    """
+    用户
+    """
+    class Meta:
+        db_table = 'user'
+
+
+models = [Admin]
