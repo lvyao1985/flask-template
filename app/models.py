@@ -418,6 +418,22 @@ class WeixinUser(BaseModel):
         return map(int, self.tagid_list.split(',')) if self.tagid_list else []
 
 
+class WeixinPayOrder(BaseModel):
+    """
+    微信支付订单
+    """
+    class Meta:
+        db_table = 'weixin_pay_order'
+
+
+class WeixinPayRefund(BaseModel):
+    """
+    微信支付退款
+    """
+    class Meta:
+        db_table = 'weixin_pay_refund'
+
+
 class User(BaseModel):
     """
     用户

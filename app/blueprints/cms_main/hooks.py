@@ -6,9 +6,9 @@ from ...models import Admin
 from ...constants import CMS_ADMIN_SESSION_KEY
 
 
-def before_request():
+def admin_authentication():
     """
-    请求前钩子函数
+    管理员身份认证
     :return:
     """
     g.admin = Admin.query_by_id(session.get(CMS_ADMIN_SESSION_KEY))  # g.admin

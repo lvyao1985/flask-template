@@ -11,7 +11,7 @@ from utils.des import decrypt
 from utils.weixin_util import get_user_info
 
 
-def _weixin_user_authentication():
+def weixin_user_authentication():
     """
     微信用户身份认证
     :return:
@@ -40,7 +40,7 @@ def _weixin_user_authentication():
             g.user.update_weixin_user(**info)
 
 
-def _user_authentication():
+def user_authentication():
     """
     用户身份认证
     :return:
@@ -61,6 +61,3 @@ def _user_authentication():
         return
 
     g.user = User.query_by_id(user_id)
-
-
-before_request = _weixin_user_authentication
