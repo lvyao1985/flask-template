@@ -8,7 +8,7 @@ import xmltodict
 
 from . import bp_www_main
 from ...models import WeixinUser
-from ...constants import WEIXIN_USER_COOKIE_KEY, USER_LOGIN_EXPIRE_DAYS
+from ...constants import WEIXIN_USER_COOKIE_KEY, LOGIN_EXPIRE_DAYS
 from utils.des import encrypt
 from utils.qiniu_util import get_upload_token
 from utils.weixin_util import get_user_info_with_authorization
@@ -59,7 +59,7 @@ def weixin_user_login():
     if not weixin_user:
         return resp
 
-    resp.set_cookie(WEIXIN_USER_COOKIE_KEY, value=encrypt(str(weixin_user.id)), max_age=86400 * USER_LOGIN_EXPIRE_DAYS)
+    resp.set_cookie(WEIXIN_USER_COOKIE_KEY, value=encrypt(str(weixin_user.id)), max_age=86400 * LOGIN_EXPIRE_DAYS)
     return resp
 
 

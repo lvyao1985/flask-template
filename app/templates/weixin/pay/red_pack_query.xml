@@ -1,0 +1,8 @@
+<xml>
+    <nonce_str><![CDATA[{{ nonce_str }}]]></nonce_str>
+    <sign><![CDATA[{{ sign }}]]></sign>
+    <mch_billno><![CDATA[{{ mch_billno }}]]></mch_billno>
+    <mch_id><![CDATA[{{ mch_id }}]]></mch_id>
+    <appid><![CDATA[{{ appid }}]]></appid>
+    <bill_type><![CDATA[MCHT]]></bill_type>
+</xml>

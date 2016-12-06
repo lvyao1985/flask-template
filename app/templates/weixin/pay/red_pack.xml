@@ -1,0 +1,19 @@
+<xml>
+    <nonce_str><![CDATA[{{ nonce_str }}]]></nonce_str>
+    <sign><![CDATA[{{ sign }}]]></sign>
+    <mch_billno><![CDATA[{{ mch_billno }}]]></mch_billno>
+    <mch_id><![CDATA[{{ mch_id }}]]></mch_id>
+    <wxappid><![CDATA[{{ wxappid }}]]></wxappid>
+    <send_name><![CDATA[{{ send_name }}]]></send_name>
+    <re_openid><![CDATA[{{ re_openid }}]]></re_openid>
+    <total_amount>{{ total_amount }}</total_amount>
+    <total_num>{{ total_num }}</total_num>
+    <amt_type><![CDATA[{{ amt_type | d }}]]></amt_type>
+    <wishing><![CDATA[{{ wishing }}]]></wishing>
+    <client_ip><![CDATA[{{ client_ip | d }}]]></client_ip>
+    <act_name><![CDATA[{{ act_name }}]]></act_name>
+    <remark><![CDATA[{{ remark }}]]></remark>
+    <scene_id><![CDATA[{{ scene_id | d }}]]></scene_id>
+    <risk_info><![CDATA[{{ risk_info | d }}]]></risk_info>
+    <consume_mch_id><![CDATA[{{ consume_mch_id | d }}]]></consume_mch_id>
+</xml>
