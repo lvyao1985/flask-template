@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from . import db
 from .constants import DEFAULT_PER_PAGE
+from utils.key_util import generate_random_key
 
 
 _to_set = (lambda r: set(r) if r else set())
@@ -181,7 +182,7 @@ class Admin(BaseModel):
     """
     管理员
     """
-    name = CharField(max_length=20, unique=True)  # 用户名
+    name = CharField(max_length=32, unique=True)  # 用户名
     password = CharField()  # 密码
     phone = CharField(null=True)  # 手机号码
     openid = CharField(null=True)  # 微信服务号openid
@@ -422,8 +423,171 @@ class WeixinPayOrder(BaseModel):
     """
     微信支付订单
     """
+    body = CharField()
+    out_trade_no = CharField(max_length=32, unique=True)
+    total_fee = IntegerField()
+    spbill_create_ip = CharField()
+    trade_type = CharField()
+    device_info = CharField(null=True)
+    detail = TextField(null=True)
+    attach = CharField(null=True)
+    fee_type = CharField(null=True)
+    time_start = CharField(null=True)
+    time_expire = CharField(null=True)
+    goods_tag = CharField(null=True)
+    product_id = CharField(null=True)
+    limit_pay = CharField(null=True)
+    openid = CharField(null=True)
+
+    order_result = TextField(null=True)  # 统一下单响应结果
+    prepay_id = CharField(null=True)
+    code_url = CharField(null=True)
+
+    notify_result = TextField(null=True)  # 支付结果通知
+    transaction_id = CharField(null=True)
+
+    query_result = TextField(null=True)  # 查询订单响应结果
+    trade_state = CharField(null=True)
+    trade_state_desc = CharField(null=True)
+
     class Meta:
         db_table = 'weixin_pay_order'
+
+    @classmethod
+    def _exclude_fields(cls):
+        return BaseModel._exclude_fields() | {'detail', 'order_result', 'notify_result', 'query_result'}
+
+    @classmethod
+    def _extra_attributes(cls):
+        return BaseModel._extra_attributes() | {'dict_detail', 'dict_order_result', 'dict_notify_result', 'dict_query_result'}
+
+    @classmethod
+    def query_by_out_trade_no(cls, out_trade_no):
+        """
+        根据out_trade_no查询
+        :param out_trade_no:
+        :return:
+        """
+        order = None
+        try:
+            order = cls.get(cls.out_trade_no == out_trade_no)
+        finally:
+            return order
+
+    @classmethod
+    def create_weixin_pay_order(cls, body, total_fee, spbill_create_ip, trade_type, device_info=None, detail=None,
+                                attach=None, fee_type=None, time_start=None, time_expire=None, goods_tag=None,
+                                product_id=None, limit_pay=None, openid=None):
+        """
+        创建微信支付订单
+        :param body:
+        :param total_fee:
+        :param spbill_create_ip:
+        :param trade_type:
+        :param device_info:
+        :param detail: [dict or None]
+        :param attach:
+        :param fee_type:
+        :param time_start:
+        :param time_expire:
+        :param goods_tag:
+        :param product_id:
+        :param limit_pay:
+        :param openid:
+        :return:
+        """
+        try:
+            return cls.create(
+                body=body.strip(),
+                out_trade_no=generate_random_key(30, current_app.config['WEIXIN'].get('mch_id')
+                                                 + datetime.date.today().strftime('%Y%m%d'), 'd'),
+                total_fee=total_fee,
+                spbill_create_ip=spbill_create_ip.strip(),
+                trade_type=trade_type.strip(),
+                device_info=_nullable_strip(device_info),
+                detail=repr(detail) if detail else None,
+                attach=_nullable_strip(attach),
+                fee_type=_nullable_strip(fee_type),
+                time_start=_nullable_strip(time_start),
+                time_expire=_nullable_strip(time_expire),
+                goods_tag=_nullable_strip(goods_tag),
+                product_id=_nullable_strip(product_id),
+                limit_pay=_nullable_strip(limit_pay),
+                openid=_nullable_strip(openid)
+            )
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_order_result(self, result):
+        """
+        更新统一下单响应结果
+        :param result: [dict]
+        :return:
+        """
+        try:
+            self.order_result = repr(result) if result else None
+            if result.get('result_code') == 'SUCCESS':
+                self.prepay_id = _nullable_strip(result.get('prepay_id'))
+                self.code_url = _nullable_strip(result.get('code_url'))
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_notify_result(self, result):
+        """
+        更新支付结果通知
+        :param result: [dict]
+        :return:
+        """
+        try:
+            self.notify_result = repr(result) if result else None
+            if result.get('result_code') == 'SUCCESS':
+                self.transaction_id = _nullable_strip(result.get('transaction_id'))
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_query_result(self, result):
+        """
+        更新查询订单响应结果
+        :param result: [dict]
+        :return:
+        """
+        try:
+            self.query_result = repr(result) if result else None
+            if result.get('result_code') == 'SUCCESS':
+                self.transaction_id = _nullable_strip(result.get('transaction_id'))
+                self.trade_state = _nullable_strip(result.get('trade_state'))
+                self.trade_state_desc = _nullable_strip(result.get('trade_state_desc'))
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def dict_detail(self):
+        return eval(self.detail) if self.detail else {}
+
+    def dict_order_result(self):
+        return eval(self.order_result) if self.order_result else {}
+
+    def dict_notify_result(self):
+        return eval(self.notify_result) if self.notify_result else {}
+
+    def dict_query_result(self):
+        return eval(self.query_result) if self.query_result else {}
 
 
 class WeixinPayRefund(BaseModel):

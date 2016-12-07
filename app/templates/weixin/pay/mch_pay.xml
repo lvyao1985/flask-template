@@ -1,13 +1,13 @@
 <xml>
     <mch_appid><![CDATA[{{ mch_appid }}]]></mch_appid>
     <mchid><![CDATA[{{ mchid }}]]></mchid>
-    <device_info><![CDATA[{{ device_info | d }}]]></device_info>
+    <device_info><![CDATA[{{ device_info | d('', true) }}]]></device_info>
     <nonce_str><![CDATA[{{ nonce_str }}]]></nonce_str>
     <sign><![CDATA[{{ sign }}]]></sign>
     <partner_trade_no><![CDATA[{{ partner_trade_no }}]]></partner_trade_no>
     <openid><![CDATA[{{ openid }}]]></openid>
     <check_name><![CDATA[{{ check_name }}]]></check_name>
-    <re_user_name><![CDATA[{{ re_user_name | d }}]]></re_user_name>
+    <re_user_name><![CDATA[{{ re_user_name | d('', true) }}]]></re_user_name>
     <amount>{{ amount }}</amount>
     <desc><![CDATA[{{ desc }}]]></desc>
     <spbill_create_ip><![CDATA[{{ spbill_create_ip }}]]></spbill_create_ip>

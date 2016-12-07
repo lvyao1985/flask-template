@@ -43,7 +43,7 @@ def weixin_user_authorize():
 @bp_www_main.route('/extensions/weixin/user/login/', methods=['GET'])
 def weixin_user_login():
     """
-    网页授权：获取微信用户基本信息，登录并跳转
+    （由微信跳转）网页授权：获取微信用户基本信息，登录并跳转
     :return:
     """
     code, state = map(request.args.get, ('code', 'state'))
@@ -94,3 +94,12 @@ def weixin_api():
             current_app.logger.error(e)
         finally:
             return make_response(xml)
+
+
+@bp_www_main.route('/extensions/weixin/pay/notify/', methods=['POST'])
+def weixin_pay_notify():
+    """
+    （由微信调用）微信支付结果通知
+    :return:
+    """
+    pass  # TODO
