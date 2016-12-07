@@ -440,13 +440,16 @@ class WeixinPayOrder(BaseModel):
     openid = CharField(null=True)
 
     order_result = TextField(null=True)  # 统一下单响应结果
+    order_result_code = CharField(null=True)
     prepay_id = CharField(null=True)
     code_url = CharField(null=True)
 
     notify_result = TextField(null=True)  # 支付结果通知
+    notify_result_code = CharField(null=True)
     transaction_id = CharField(null=True)
 
     query_result = TextField(null=True)  # 查询订单响应结果
+    query_result_code = CharField(null=True)
     trade_state = CharField(null=True)
     trade_state_desc = CharField(null=True)
 
@@ -455,11 +458,11 @@ class WeixinPayOrder(BaseModel):
 
     @classmethod
     def _exclude_fields(cls):
-        return BaseModel._exclude_fields() | {'detail', 'order_result', 'notify_result', 'query_result'}
+        return BaseModel._exclude_fields() | {'order_result', 'notify_result', 'query_result'}
 
     @classmethod
     def _extra_attributes(cls):
-        return BaseModel._extra_attributes() | {'dict_detail', 'dict_order_result', 'dict_notify_result', 'dict_query_result'}
+        return BaseModel._extra_attributes() | {'dict_order_result', 'dict_notify_result', 'dict_query_result'}
 
     @classmethod
     def query_by_out_trade_no(cls, out_trade_no):
@@ -485,7 +488,7 @@ class WeixinPayOrder(BaseModel):
         :param spbill_create_ip:
         :param trade_type:
         :param device_info:
-        :param detail: [dict or None]
+        :param detail:
         :param attach:
         :param fee_type:
         :param time_start:
@@ -505,7 +508,7 @@ class WeixinPayOrder(BaseModel):
                 spbill_create_ip=spbill_create_ip.strip(),
                 trade_type=trade_type.strip(),
                 device_info=_nullable_strip(device_info),
-                detail=repr(detail) if detail else None,
+                detail=_nullable_strip(detail),
                 attach=_nullable_strip(attach),
                 fee_type=_nullable_strip(fee_type),
                 time_start=_nullable_strip(time_start),
@@ -528,7 +531,8 @@ class WeixinPayOrder(BaseModel):
         """
         try:
             self.order_result = repr(result) if result else None
-            if result.get('result_code') == 'SUCCESS':
+            self.order_result_code = result.get('result_code')
+            if self.order_result_code == 'SUCCESS':
                 self.prepay_id = _nullable_strip(result.get('prepay_id'))
                 self.code_url = _nullable_strip(result.get('code_url'))
             self.update_time = datetime.datetime.now()
@@ -547,7 +551,8 @@ class WeixinPayOrder(BaseModel):
         """
         try:
             self.notify_result = repr(result) if result else None
-            if result.get('result_code') == 'SUCCESS':
+            self.notify_result_code = result.get('result_code')
+            if self.notify_result_code == 'SUCCESS':
                 self.transaction_id = _nullable_strip(result.get('transaction_id'))
             self.update_time = datetime.datetime.now()
             self.save()
@@ -565,7 +570,8 @@ class WeixinPayOrder(BaseModel):
         """
         try:
             self.query_result = repr(result) if result else None
-            if result.get('result_code') == 'SUCCESS':
+            self.query_result_code = result.get('result_code')
+            if self.query_result_code == 'SUCCESS':
                 self.transaction_id = _nullable_strip(result.get('transaction_id'))
                 self.trade_state = _nullable_strip(result.get('trade_state'))
                 self.trade_state_desc = _nullable_strip(result.get('trade_state_desc'))
@@ -576,9 +582,6 @@ class WeixinPayOrder(BaseModel):
         except Exception, e:
             current_app.logger.error(e)
             return None
-
-    def dict_detail(self):
-        return eval(self.detail) if self.detail else {}
 
     def dict_order_result(self):
         return eval(self.order_result) if self.order_result else {}

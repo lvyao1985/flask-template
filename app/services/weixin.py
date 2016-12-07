@@ -35,7 +35,6 @@ def unified_order(order):
         sign = result.pop('sign')
         assert sign == generate_pay_sign(wx, result), u'微信支付签名验证失败'
         order.update_order_result(result)
-
     except Exception, e:
         current_app.logger.error(e)
         current_app.logger.info(resp.text)

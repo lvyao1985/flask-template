@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import hashlib
+import time
 
 import requests
 
 from app import redis_client
+from .key_util import generate_random_key
 
 
 def get_access_token(wx):
@@ -163,3 +165,21 @@ def generate_pay_sign(wx, data):
     items = ['%s=%s' % (k, data[k]) for k in sorted(data) if data[k]]
     items.append('key=%s' % pay_key)
     return hashlib.md5('&'.join(items).encode('utf-8')).hexdigest().upper()
+
+
+def generate_jsapi_pay_params(wx, prepay_id):
+    """
+    生成微信公众号支付参数（WeixinJSBridge对象getBrandWCPayRequest参数）
+    :param wx: [dict]
+    :param prepay_id:
+    :return:
+    """
+    params = {
+        'appId': wx.get('app_id'),
+        'timeStamp': str(int(time.time())),
+        'nonceStr': generate_random_key(16),
+        'package': 'prepay_id=%s' % prepay_id,
+        'signType': 'MD5'
+    }
+    params['paySign'] = generate_pay_sign(wx, params)
+    return params

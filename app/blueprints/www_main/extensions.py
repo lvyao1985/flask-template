@@ -7,11 +7,11 @@ from flask import current_app, request, url_for, redirect, make_response, jsonif
 import xmltodict
 
 from . import bp_www_main
-from ...models import WeixinUser
+from ...models import WeixinUser, WeixinPayOrder
 from ...constants import WEIXIN_USER_COOKIE_KEY, LOGIN_EXPIRE_DAYS
 from utils.des import encrypt
 from utils.qiniu_util import get_upload_token
-from utils.weixin_util import get_user_info_with_authorization
+from utils.weixin_util import get_user_info_with_authorization, generate_pay_sign
 
 
 @bp_www_main.route('/extensions/qiniu/upload_token/', methods=['GET'])
@@ -63,10 +63,34 @@ def weixin_user_login():
     return resp
 
 
+@bp_www_main.route('/extensions/weixin/pay/notify/', methods=['POST'])
+def weixin_pay_notify():
+    """
+    （由微信访问）微信支付结果通知
+    :return:
+    """
+    template = current_app.jinja_env.get_template('weixin/pay/unified_order_notice_reply.xml')
+    try:
+        result = xmltodict.parse(request.data)['xml']
+        sign = result.pop('sign')
+        assert sign == generate_pay_sign(current_app.config['WEIXIN'], result), u'微信支付签名验证失败'
+        out_trade_no = result['out_trade_no']
+    except Exception, e:
+        current_app.logger.error(e)
+        current_app.logger.info(request.data)
+        return make_response(template.render(return_code='FAIL', return_msg=e.message))
+
+    order = WeixinPayOrder.query_by_out_trade_no(out_trade_no)
+    if order and not order.notify_result_code:
+        order.update_notify_result(result)
+        # TODO: 业务逻辑
+    return make_response(template.render(return_code='SUCCESS'))
+
+
 @bp_www_main.route('/extensions/weixin/api/', methods=['GET', 'POST'])
 def weixin_api():
     """
-    （由微信调用）微信API
+    （由微信访问）微信API
     :return:
     """
     signature, timestamp, nonce = map(request.args.get, ('signature', 'timestamp', 'nonce'))
@@ -90,16 +114,8 @@ def weixin_api():
         try:
             message = xmltodict.parse(request.data)['xml']
             current_app.logger.info(message)
+            # TODO: 业务逻辑
         except Exception, e:
             current_app.logger.error(e)
         finally:
             return make_response(xml)
-
-
-@bp_www_main.route('/extensions/weixin/pay/notify/', methods=['POST'])
-def weixin_pay_notify():
-    """
-    （由微信调用）微信支付结果通知
-    :return:
-    """
-    pass  # TODO
