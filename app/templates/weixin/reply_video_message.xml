@@ -5,7 +5,7 @@
     <MsgType><![CDATA[video]]></MsgType>
     <Video>
         <MediaId><![CDATA[{{ media_id }}]]></MediaId>
-        <Title><![CDATA[{{ title | d }}]]></Title>
-        <Description><![CDATA[{{ description | d }}]]></Description>
+        <Title><![CDATA[{{ title | d('', true) }}]]></Title>
+        <Description><![CDATA[{{ description | d('', true) }}]]></Description>
     </Video>
 </xml>

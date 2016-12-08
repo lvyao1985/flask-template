@@ -13,7 +13,7 @@ def before_app_request():
     if not (request.blueprint and request.endpoint):
         abort(404)
 
-    g.ip = request.environ.get('HTTP_X_FORWARDED_FOR', request.environ.get('REMOTE_ADDR'))  # g.ip
+    g.ip = request.environ.get('HTTP_X_FORWARDED_FOR') or request.environ.get('REMOTE_ADDR')  # g.ip
     db.connect()
 
 

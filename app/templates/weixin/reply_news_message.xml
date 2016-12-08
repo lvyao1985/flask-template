@@ -7,10 +7,10 @@
     <Articles>
         {% for item in articles %}
         <item>
-            <Title><![CDATA[{{ item['title'] | d }}]]></Title>
-            <Description><![CDATA[{{ item['description'] | d }}]]></Description>
-            <PicUrl><![CDATA[{{ item['pic_url'] | d }}]]></PicUrl>
-            <Url><![CDATA[{{ item['url'] | d }}]]></Url>
+            <Title><![CDATA[{{ item['title'] | d('', true) }}]]></Title>
+            <Description><![CDATA[{{ item['description'] | d('', true) }}]]></Description>
+            <PicUrl><![CDATA[{{ item['pic_url'] | d('', true) }}]]></PicUrl>
+            <Url><![CDATA[{{ item['url'] | d('', true) }}]]></Url>
         </item>
         {% endfor %}
     </Articles>

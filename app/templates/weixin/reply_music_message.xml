@@ -4,10 +4,10 @@
     <CreateTime>{{ time }}</CreateTime>
     <MsgType><![CDATA[music]]></MsgType>
     <Music>
-        <Title><![CDATA[{{ title | d }}]]></Title>
-        <Description><![CDATA[{{ description | d }}]]></Description>
-        <MusicUrl><![CDATA[{{ url | d }}]]></MusicUrl>
-        <HQMusicUrl><![CDATA[{{ hq_url | d }}]]></HQMusicUrl>
+        <Title><![CDATA[{{ title | d('', true) }}]]></Title>
+        <Description><![CDATA[{{ description | d('', true) }}]]></Description>
+        <MusicUrl><![CDATA[{{ url | d('', true) }}]]></MusicUrl>
+        <HQMusicUrl><![CDATA[{{ hq_url | d('', true) }}]]></HQMusicUrl>
         <ThumbMediaId><![CDATA[{{ media_id }}]]></ThumbMediaId>
     </Music>
 </xml>

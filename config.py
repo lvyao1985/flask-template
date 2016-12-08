@@ -9,7 +9,7 @@ class Config:
     """
     配置
     """
-    _project_name = 'flask_template'
+    _project_name = 'flask_template'  # TODO: 项目名称
     SECRET_KEY = environ.get('FLASK_SECRET_KEY')
 
     # mysql
@@ -95,7 +95,7 @@ class TestingConfig(Config):
     """
     测试环境配置
     """
-    SERVER_NAME = ''
+    SERVER_NAME = ''  # TODO: 域名
     SUBDOMAIN = {
         'www_main': Config._project_name,
         'www_api': Config._project_name,
@@ -108,7 +108,7 @@ class ProductionConfig(Config):
     """
     生产环境配置
     """
-    SERVER_NAME = ''
+    SERVER_NAME = ''  # TODO: 域名
     SUBDOMAIN = {
         'www_main': None,
         'www_api': None,

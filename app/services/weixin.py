@@ -14,7 +14,7 @@ def unified_order(order):
     :param order:
     :return:
     """
-    if order.prepay_id:
+    if order.order_result_code == 'SUCCESS':
         return
 
     wx = current_app.config['WEIXIN']

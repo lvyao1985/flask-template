@@ -8,7 +8,7 @@ import xmltodict
 
 from . import bp_www_main
 from ...models import WeixinUser, WeixinPayOrder
-from ...constants import WEIXIN_USER_COOKIE_KEY, LOGIN_EXPIRE_DAYS
+from ...constants import WEIXIN_USER_COOKIE_KEY, LOGIN_MAXAGE_DAYS
 from utils.des import encrypt
 from utils.qiniu_util import get_upload_token
 from utils.weixin_util import get_user_info_with_authorization, generate_pay_sign
@@ -29,7 +29,7 @@ def get_qiniu_upload_token():
 @bp_www_main.route('/extensions/weixin/user/authorize/', methods=['GET'])
 def weixin_user_authorize():
     """
-    网页授权：跳转到微信登录页面
+    微信网页授权：跳转到微信登录页面
     :return:
     """
     app_id = current_app.config['WEIXIN'].get('app_id')
@@ -43,7 +43,7 @@ def weixin_user_authorize():
 @bp_www_main.route('/extensions/weixin/user/login/', methods=['GET'])
 def weixin_user_login():
     """
-    （由微信跳转）网页授权：获取微信用户基本信息，登录并跳转
+    （由微信跳转）微信网页授权：获取微信用户基本信息，登录并跳转
     :return:
     """
     code, state = map(request.args.get, ('code', 'state'))
@@ -59,7 +59,7 @@ def weixin_user_login():
     if not weixin_user:
         return resp
 
-    resp.set_cookie(WEIXIN_USER_COOKIE_KEY, value=encrypt(str(weixin_user.id)), max_age=86400 * LOGIN_EXPIRE_DAYS)
+    resp.set_cookie(WEIXIN_USER_COOKIE_KEY, value=encrypt(str(weixin_user.id)), max_age=86400 * LOGIN_MAXAGE_DAYS)
     return resp
 
 
