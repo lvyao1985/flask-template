@@ -453,16 +453,19 @@ class WeixinPayOrder(BaseModel):
     trade_state = CharField(null=True)
     trade_state_desc = CharField(null=True)
 
+    close_result = TextField(null=True)  # 关闭订单响应结果
+    close_result_code = CharField(null=True)
+
     class Meta:
         db_table = 'weixin_pay_order'
 
     @classmethod
     def _exclude_fields(cls):
-        return BaseModel._exclude_fields() | {'order_result', 'notify_result', 'query_result'}
+        return BaseModel._exclude_fields() | {'order_result', 'notify_result', 'query_result', 'close_result'}
 
     @classmethod
     def _extra_attributes(cls):
-        return BaseModel._extra_attributes() | {'dict_order_result', 'dict_notify_result', 'dict_query_result'}
+        return BaseModel._extra_attributes() | {'dict_order_result', 'dict_notify_result', 'dict_query_result', 'dict_close_result'}
 
     @classmethod
     def query_by_out_trade_no(cls, out_trade_no):
@@ -583,6 +586,23 @@ class WeixinPayOrder(BaseModel):
             current_app.logger.error(e)
             return None
 
+    def update_close_result(self, result):
+        """
+        更新关闭订单响应结果
+        :param result: [dict]
+        :return:
+        """
+        try:
+            self.close_result = repr(result) if result else None
+            self.close_result_code = result.get('result_code')
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
     def dict_order_result(self):
         return eval(self.order_result) if self.order_result else {}
 
@@ -591,6 +611,9 @@ class WeixinPayOrder(BaseModel):
 
     def dict_query_result(self):
         return eval(self.query_result) if self.query_result else {}
+
+    def dict_close_result(self):
+        return eval(self.close_result) if self.close_result else {}
 
 
 class WeixinPayRefund(BaseModel):

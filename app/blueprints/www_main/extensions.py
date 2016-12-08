@@ -83,7 +83,7 @@ def weixin_pay_notify():
     order = WeixinPayOrder.query_by_out_trade_no(out_trade_no)
     if order and not order.notify_result_code:
         order.update_notify_result(result)
-        # TODO: 业务逻辑
+        # TODO: 业务逻辑A
     return make_response(template.render(return_code='SUCCESS'))
 
 
@@ -114,7 +114,7 @@ def weixin_api():
         try:
             message = xmltodict.parse(request.data)['xml']
             current_app.logger.info(message)
-            # TODO: 业务逻辑
+            # TODO: 业务逻辑B
         except Exception, e:
             current_app.logger.error(e)
         finally:

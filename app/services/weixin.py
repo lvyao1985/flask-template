@@ -38,3 +38,76 @@ def unified_order(order):
     except Exception, e:
         current_app.logger.error(e)
         current_app.logger.info(resp.text)
+
+
+def query_order(order):
+    """
+    微信支付查询订单
+    :param order:
+    :return:
+    """
+    wx = current_app.config['WEIXIN']
+    params = {
+        'appid': wx.get('app_id'),
+        'mch_id': wx.get('mch_id'),
+        'nonce_str': generate_random_key(16)
+    }
+    if order.transaction_id:
+        params['transaction_id'] = order.transaction_id
+    else:
+        params['out_trade_no'] = order.out_trade_no
+    params['sign'] = generate_pay_sign(wx, params)
+    xml = current_app.jinja_env.get_template('weixin/pay/order_query.xml').render(**params)
+    wx_url = 'https://api.mch.weixin.qq.com/pay/orderquery'
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'})
+    resp.encoding = 'utf-8'
+    try:
+        result = xmltodict.parse(resp.text)['xml']
+        sign = result.pop('sign')
+        assert sign == generate_pay_sign(wx, result), u'微信支付签名验证失败'
+        order.update_query_result(result)
+    except Exception, e:
+        current_app.logger.error(e)
+        current_app.logger.info(resp.text)
+
+
+def close_order(order):
+    """
+    微信支付关闭订单
+    :param order:
+    :return:
+    """
+    wx = current_app.config['WEIXIN']
+    params = {
+        'appid': wx.get('app_id'),
+        'mch_id': wx.get('mch_id'),
+        'out_trade_no': order.out_trade_no,
+        'nonce_str': generate_random_key(16)
+    }
+    params['sign'] = generate_pay_sign(wx, params)
+    xml = current_app.jinja_env.get_template('weixin/pay/unified_order_close.xml').render(**params)
+    wx_url = 'https://api.mch.weixin.qq.com/pay/closeorder'
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'})
+    resp.encoding = 'utf-8'
+    try:
+        result = xmltodict.parse(resp.text)['xml']
+        sign = result.pop('sign')
+        assert sign == generate_pay_sign(wx, result), u'微信支付签名验证失败'
+        order.update_close_result(result)
+    except Exception, e:
+        current_app.logger.error(e)
+        current_app.logger.info(resp.text)
+
+
+def update_order_state(order):
+    """
+    更新微信支付订单的状态
+    :param order:
+    :return:
+    """
+    query_order(order)
+    if order.trade_state == 'PAYERROR':
+        close_order(order)
+        if order.close_result_code == 'SUCCESS':
+            query_order(order)
+    # TODO: 业务逻辑A
