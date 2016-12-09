@@ -744,6 +744,132 @@ class WeixinPayRefund(BaseModel):
         return eval(self.query_result) if self.query_result else {}
 
 
+class WeixinMchPay(BaseModel):
+    """
+    微信支付企业付款
+    """
+    CHECK_NAME_CHOICES = (
+        ('NO_CHECK', u'不校验真实姓名'),
+        ('FORCE_CHECK', u'强校验真实姓名'),
+        ('OPTION_CHECK', u'针对已实名认证的用户才校验真实姓名')
+    )
+    partner_trade_no = CharField(max_length=32, unique=True)
+    openid = CharField()
+    check_name = CharField(choices=CHECK_NAME_CHOICES)
+    amount = IntegerField()
+    desc = CharField()
+    spbill_create_ip = CharField()
+    device_info = CharField(null=True)
+    re_user_name = CharField(null=True)
+
+    pay_result = TextField(null=True)  # 企业付款响应结果
+    pay_result_code = CharField(null=True)
+    payment_no = CharField(null=True)
+
+    query_result = TextField(null=True)  # 查询企业付款响应结果
+    query_result_code = CharField(null=True)
+    status = CharField(null=True)
+
+    class Meta:
+        db_table = 'weixin_mch_pay'
+
+    @classmethod
+    def _exclude_fields(cls):
+        return BaseModel._exclude_fields() | {'pay_result', 'query_result'}
+
+    @classmethod
+    def _extra_attributes(cls):
+        return BaseModel._extra_attributes() | {'dict_pay_result', 'dict_query_result'}
+
+    @classmethod
+    def query_by_partner_trade_no(cls, partner_trade_no):
+        """
+        根据partner_trade_no查询
+        :param partner_trade_no:
+        :return:
+        """
+        pay = None
+        try:
+            pay = cls.get(cls.partner_trade_no == partner_trade_no)
+        finally:
+            return pay
+
+    @classmethod
+    def create_weixin_mch_pay(cls, openid, check_name, amount, desc, spbill_create_ip, device_info=None,
+                              re_user_name=None):
+        """
+        创建微信支付企业付款
+        :param openid:
+        :param check_name:
+        :param amount:
+        :param desc:
+        :param spbill_create_ip:
+        :param device_info:
+        :param re_user_name:
+        :return:
+        """
+        try:
+            return cls.create(
+                partner_trade_no=generate_random_key(20, datetime.date.today().strftime('%Y%m%d'), 'd'),
+                openid=openid.strip(),
+                check_name=check_name.strip(),
+                amount=amount,
+                desc=desc.strip(),
+                spbill_create_ip=spbill_create_ip.strip(),
+                device_info=_nullable_strip(device_info),
+                re_user_name=_nullable_strip(re_user_name)
+            )
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_pay_result(self, result):
+        """
+        更新企业付款响应结果
+        :param result: [dict]
+        :return:
+        """
+        try:
+            self.pay_result = repr(result) if result else None
+            self.pay_result_code = result.get('result_code')
+            if self.pay_result_code == 'SUCCESS':
+                self.payment_no = _nullable_strip(result.get('payment_no'))
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_query_result(self, result):
+        """
+        更新查询企业付款响应结果
+        :param result: [dict]
+        :return:
+        """
+        try:
+            self.query_result = repr(result) if result else None
+            self.query_result_code = result.get('result_code')
+            if self.query_result_code == 'SUCCESS':
+                self.payment_no = _nullable_strip(result.get('detail_id'))
+                self.status = _nullable_strip(result.get('status'))
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def dict_pay_result(self):
+        return eval(self.pay_result) if self.pay_result else {}
+
+    def dict_query_result(self):
+        return eval(self.query_result) if self.query_result else {}
+
+
 class User(BaseModel):
     """
     用户

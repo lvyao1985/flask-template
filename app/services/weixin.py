@@ -119,7 +119,8 @@ def update_order_state(order):
     :return:
     """
     query_order(order)
-    if order.trade_state == 'PAYERROR':
+    status = order.trade_state
+    if status == 'PAYERROR':
         for n in range(0, 3):  # 最多尝试3次撤销订单
             cancel_order(order)
             if order.recall == 'Y':
@@ -212,3 +213,76 @@ def update_refund_state(refund):
         if status == 'FAIL':
             apply_for_refund(refund)
     # TODO: 业务逻辑B
+
+
+def apply_for_mch_pay(pay):
+    """
+    微信支付企业付款
+    :param pay:
+    :return:
+    """
+    if pay.pay_result_code == 'SUCCESS':
+        return
+
+    wx = current_app.config['WEIXIN']
+    wx_url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/promotion/transfers'
+    template = 'weixin/pay/mch_pay.xml'
+    params = pay.to_dict(only=('device_info', 'partner_trade_no', 'openid', 'check_name', 're_user_name', 'amount',
+                               'desc', 'spbill_create_ip'))
+    params['mch_appid'] = wx.get('app_id')
+    params['mchid'] = wx.get('mch_id')
+    params['nonce_str'] = generate_random_key(16)
+    params['sign'] = generate_pay_sign(wx, params)
+    xml = current_app.jinja_env.get_template(template).render(**params)
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'},
+                         cert=(wx.get('cert_path'), wx.get('key_path')))
+    resp.encoding = 'utf-8'
+    try:
+        result = xmltodict.parse(resp.text)['xml']
+        assert 'result_code' in result, result.get('return_msg')
+        pay.update_pay_result(result)
+    except Exception, e:
+        current_app.logger.error(e)
+        current_app.logger.info(resp.text)
+
+
+def query_mch_pay(pay):
+    """
+    微信支付查询企业付款
+    :param pay:
+    :return:
+    """
+    wx = current_app.config['WEIXIN']
+    wx_url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/gettransferinfo'
+    template = 'weixin/pay/mch_pay_query.xml'
+    params = {
+        'nonce_str': generate_random_key(16),
+        'partner_trade_no': pay.partner_trade_no,
+        'mch_id': wx.get('mch_id'),
+        'appid': wx.get('app_id')
+    }
+    params['sign'] = generate_pay_sign(wx, params)
+    xml = current_app.jinja_env.get_template(template).render(**params)
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'})
+    resp.encoding = 'utf-8'
+    try:
+        result = xmltodict.parse(resp.text)['xml']
+        assert 'result_code' in result, result.get('return_msg')
+        pay.update_query_result(result)
+    except Exception, e:
+        current_app.logger.error(e)
+        current_app.logger.info(resp.text)
+
+
+def update_mch_pay_state(pay):
+    """
+    更新微信支付企业付款的状态
+    :param pay:
+    :return:
+    """
+    query_mch_pay(pay)
+    status = pay.status
+    if status == 'FAILED':
+        current_app.logger.error(u'微信支付企业付款失败')
+        apply_for_mch_pay(pay)
+    # TODO: 业务逻辑C
