@@ -131,3 +131,84 @@ def update_order_state(order):
         else:
             current_app.logger.error(u'微信支付关闭/撤销订单失败')
     # TODO: 业务逻辑A
+
+
+def apply_for_refund(refund):
+    """
+    微信支付申请退款
+    :param refund:
+    :return:
+    """
+    if refund.refund_status in ['SUCCESS', 'PROCESSING', 'CHANGE']:
+        return
+
+    wx = current_app.config['WEIXIN']
+    wx_url = 'https://api.mch.weixin.qq.com/secapi/pay/refund'
+    template = 'weixin/pay/refund.xml'
+    params = refund.to_dict(only=('out_refund_no', 'refund_fee', 'refund_fee_type', 'op_user_id', 'refund_account'))
+    params['appid'] = wx.get('app_id')
+    params['mch_id'] = wx.get('mch_id')
+    params['device_info'] = refund.weixin_pay_order.device_info
+    params['nonce_str'] = generate_random_key(16)
+    params['out_trade_no'] = refund.weixin_pay_order.out_trade_no
+    params['total_fee'] = refund.weixin_pay_order.total_fee
+    params['sign'] = generate_pay_sign(wx, params)
+    xml = current_app.jinja_env.get_template(template).render(**params)
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'},
+                         cert=(wx.get('cert_path'), wx.get('key_path')))
+    resp.encoding = 'utf-8'
+    try:
+        result = xmltodict.parse(resp.text)['xml']
+        sign = result.pop('sign')
+        assert sign == generate_pay_sign(wx, result), u'微信支付签名验证失败'
+        refund.update_refund_result(result)
+    except Exception, e:
+        current_app.logger.error(e)
+        current_app.logger.info(resp.text)
+
+
+def query_refund(refund):
+    """
+    微信支付查询退款
+    :param refund:
+    :return:
+    """
+    wx = current_app.config['WEIXIN']
+    wx_url = 'https://api.mch.weixin.qq.com/pay/refundquery'
+    template = 'weixin/pay/refund_query.xml'
+    params = {
+        'appid': wx.get('app_id'),
+        'mch_id': wx.get('mch_id'),
+        'device_info': refund.weixin_pay_order.device_info,
+        'nonce_str': generate_random_key(16),
+        'out_refund_no': refund.out_refund_no
+    }
+    params['sign'] = generate_pay_sign(wx, params)
+    xml = current_app.jinja_env.get_template(template).render(**params)
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'})
+    resp.encoding = 'utf-8'
+    try:
+        result = xmltodict.parse(resp.text)['xml']
+        sign = result.pop('sign')
+        assert sign == generate_pay_sign(wx, result), u'微信支付签名验证失败'
+        refund.update_query_result(result)
+    except Exception, e:
+        current_app.logger.error(e)
+        current_app.logger.info(resp.text)
+
+
+def update_refund_state(refund):
+    """
+    更新微信支付退款的状态
+    :param refund:
+    :return:
+    """
+    query_refund(refund)
+    status = refund.refund_status
+    if status == 'SUCCESS':
+        query_order(refund.weixin_pay_order)
+    elif status != 'PROCESSING':
+        current_app.logger.error(u'微信支付申请退款失败')
+        if status == 'FAIL':
+            apply_for_refund(refund)
+    # TODO: 业务逻辑B

@@ -114,7 +114,7 @@ def weixin_api():
         try:
             message = xmltodict.parse(request.data)['xml']
             current_app.logger.info(message)
-            # TODO: 业务逻辑B
+            # TODO: 业务逻辑C
         except Exception, e:
             current_app.logger.error(e)
         finally:
