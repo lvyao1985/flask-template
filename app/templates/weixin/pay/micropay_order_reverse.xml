@@ -1,0 +1,9 @@
+<xml>
+    <appid><![CDATA[{{ appid }}]]></appid>
+    <mch_id><![CDATA[{{ mch_id }}]]></mch_id>
+    <transaction_id><![CDATA[{{ transaction_id | d('', true) }}]]></transaction_id>
+    <out_trade_no><![CDATA[{{ out_trade_no | d('', true) }}]]></out_trade_no>
+    <nonce_str><![CDATA[{{ nonce_str }}]]></nonce_str>
+    <sign><![CDATA[{{ sign }}]]></sign>
+    <sign_type><![CDATA[{{ sign_type | d('', true) }}]]></sign_type>
+</xml>

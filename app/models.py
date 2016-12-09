@@ -423,11 +423,17 @@ class WeixinPayOrder(BaseModel):
     """
     微信支付订单
     """
+    TRADE_TYPE_CHOICES = (
+        ('JSAPI', u'公众号支付'),
+        ('NATIVE', u'原生扫码支付'),
+        ('APP', u'APP支付'),
+        ('MICROPAY', u'刷卡支付')
+    )
     body = CharField()
     out_trade_no = CharField(max_length=32, unique=True)
     total_fee = IntegerField()
     spbill_create_ip = CharField()
-    trade_type = CharField()
+    trade_type = CharField(choices=TRADE_TYPE_CHOICES)
     device_info = CharField(null=True)
     detail = TextField(null=True)
     attach = CharField(null=True)
@@ -438,34 +444,37 @@ class WeixinPayOrder(BaseModel):
     product_id = CharField(null=True)
     limit_pay = CharField(null=True)
     openid = CharField(null=True)
+    auth_code = CharField(null=True)
 
-    order_result = TextField(null=True)  # 统一下单响应结果
+    order_result = TextField(null=True)  # 统一下单/提交刷卡支付响应结果
     order_result_code = CharField(null=True)
     prepay_id = CharField(null=True)
     code_url = CharField(null=True)
-
-    notify_result = TextField(null=True)  # 支付结果通知
-    notify_result_code = CharField(null=True)
     transaction_id = CharField(null=True)
+
+    notify_result = TextField(null=True)  # 支付结果通知（统一下单）
+    notify_result_code = CharField(null=True)
 
     query_result = TextField(null=True)  # 查询订单响应结果
     query_result_code = CharField(null=True)
     trade_state = CharField(null=True)
     trade_state_desc = CharField(null=True)
 
-    close_result = TextField(null=True)  # 关闭订单响应结果
-    close_result_code = CharField(null=True)
+    cancel_result = TextField(null=True)  # 关闭/撤销订单响应结果
+    cancel_result_code = CharField(null=True)
+    recall = CharField(null=True)
 
     class Meta:
         db_table = 'weixin_pay_order'
 
     @classmethod
     def _exclude_fields(cls):
-        return BaseModel._exclude_fields() | {'order_result', 'notify_result', 'query_result', 'close_result'}
+        return BaseModel._exclude_fields() | {'order_result', 'notify_result', 'query_result', 'cancel_result'}
 
     @classmethod
     def _extra_attributes(cls):
-        return BaseModel._extra_attributes() | {'dict_order_result', 'dict_notify_result', 'dict_query_result', 'dict_close_result'}
+        return BaseModel._extra_attributes() | {'dict_order_result', 'dict_notify_result', 'dict_query_result',
+                                                'dict_cancel_result'}
 
     @classmethod
     def query_by_out_trade_no(cls, out_trade_no):
@@ -483,7 +492,7 @@ class WeixinPayOrder(BaseModel):
     @classmethod
     def create_weixin_pay_order(cls, body, total_fee, spbill_create_ip, trade_type, device_info=None, detail=None,
                                 attach=None, fee_type=None, time_start=None, time_expire=None, goods_tag=None,
-                                product_id=None, limit_pay=None, openid=None):
+                                product_id=None, limit_pay=None, openid=None, auth_code=None):
         """
         创建微信支付订单
         :param body:
@@ -500,13 +509,13 @@ class WeixinPayOrder(BaseModel):
         :param product_id:
         :param limit_pay:
         :param openid:
+        :param auth_code:
         :return:
         """
         try:
             return cls.create(
                 body=body.strip(),
-                out_trade_no=generate_random_key(30, current_app.config['WEIXIN'].get('mch_id')
-                                                 + datetime.date.today().strftime('%Y%m%d'), 'd'),
+                out_trade_no=generate_random_key(24, datetime.date.today().strftime('%Y%m%d'), 'd'),
                 total_fee=total_fee,
                 spbill_create_ip=spbill_create_ip.strip(),
                 trade_type=trade_type.strip(),
@@ -519,7 +528,8 @@ class WeixinPayOrder(BaseModel):
                 goods_tag=_nullable_strip(goods_tag),
                 product_id=_nullable_strip(product_id),
                 limit_pay=_nullable_strip(limit_pay),
-                openid=_nullable_strip(openid)
+                openid=_nullable_strip(openid),
+                auth_code=_nullable_strip(auth_code)
             )
 
         except Exception, e:
@@ -528,7 +538,7 @@ class WeixinPayOrder(BaseModel):
 
     def update_order_result(self, result):
         """
-        更新统一下单响应结果
+        更新统一下单/提交刷卡支付响应结果
         :param result: [dict]
         :return:
         """
@@ -538,6 +548,7 @@ class WeixinPayOrder(BaseModel):
             if self.order_result_code == 'SUCCESS':
                 self.prepay_id = _nullable_strip(result.get('prepay_id'))
                 self.code_url = _nullable_strip(result.get('code_url'))
+                self.transaction_id = _nullable_strip(result.get('transaction_id'))
             self.update_time = datetime.datetime.now()
             self.save()
             return self
@@ -548,7 +559,7 @@ class WeixinPayOrder(BaseModel):
 
     def update_notify_result(self, result):
         """
-        更新支付结果通知
+        更新支付结果通知（统一下单）
         :param result: [dict]
         :return:
         """
@@ -586,15 +597,16 @@ class WeixinPayOrder(BaseModel):
             current_app.logger.error(e)
             return None
 
-    def update_close_result(self, result):
+    def update_cancel_result(self, result):
         """
-        更新关闭订单响应结果
+        更新关闭/撤销订单响应结果
         :param result: [dict]
         :return:
         """
         try:
-            self.close_result = repr(result) if result else None
-            self.close_result_code = result.get('result_code')
+            self.cancel_result = repr(result) if result else None
+            self.cancel_result_code = result.get('result_code')
+            self.recall = result.get('recall')
             self.update_time = datetime.datetime.now()
             self.save()
             return self
@@ -612,16 +624,124 @@ class WeixinPayOrder(BaseModel):
     def dict_query_result(self):
         return eval(self.query_result) if self.query_result else {}
 
-    def dict_close_result(self):
-        return eval(self.close_result) if self.close_result else {}
+    def dict_cancel_result(self):
+        return eval(self.cancel_result) if self.cancel_result else {}
 
 
 class WeixinPayRefund(BaseModel):
     """
     微信支付退款
     """
+    weixin_pay_order = ForeignKeyField(WeixinPayOrder, on_delete='CASCADE')
+    out_refund_no = CharField(max_length=32, unique=True)
+    refund_fee = IntegerField()
+    op_user_id = CharField()
+    refund_fee_type = CharField(null=True)
+    refund_account = CharField(null=True)
+
+    refund_result = TextField(null=True)  # 申请退款响应结果
+    refund_result_code = CharField(null=True)
+    refund_id = CharField(null=True)
+
+    query_result = TextField(null=True)  # 查询退款响应结果
+    query_result_code = CharField(null=True)
+    refund_status = CharField(null=True)
+
     class Meta:
         db_table = 'weixin_pay_refund'
+
+    @classmethod
+    def _exclude_fields(cls):
+        return BaseModel._exclude_fields() | {'refund_result', 'query_result'}
+
+    @classmethod
+    def _extra_attributes(cls):
+        return BaseModel._extra_attributes() | {'dict_refund_result', 'dict_query_result'}
+
+    @classmethod
+    def query_by_out_refund_no(cls, out_refund_no):
+        """
+        根据out_refund_no查询
+        :param out_refund_no:
+        :return:
+        """
+        refund = None
+        try:
+            refund = cls.get(cls.out_refund_no == out_refund_no)
+        finally:
+            return refund
+
+    @classmethod
+    def create_weixin_pay_refund(cls, weixin_pay_order, refund_fee, op_user_id, refund_fee_type=None,
+                                 refund_account=None):
+        """
+        创建微信支付退款
+        :param weixin_pay_order:
+        :param refund_fee:
+        :param op_user_id:
+        :param refund_fee_type:
+        :param refund_account:
+        :return:
+        """
+        try:
+            return cls.create(
+                weixin_pay_order=weixin_pay_order,
+                out_refund_no=generate_random_key(28, weixin_pay_order.out_trade_no, 'd'),
+                refund_fee=refund_fee,
+                op_user_id=op_user_id.strip(),
+                refund_fee_type=_nullable_strip(refund_fee_type),
+                refund_account=_nullable_strip(refund_account)
+            )
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_refund_result(self, result):
+        """
+        更新申请退款响应结果
+        :param result: [dict]
+        :return:
+        """
+        try:
+            self.refund_result = repr(result) if result else None
+            self.refund_result_code = result.get('result_code')
+            if self.refund_result_code == 'SUCCESS':
+                self.refund_id = _nullable_strip(result.get('refund_id'))
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_query_result(self, result):
+        """
+        更新查询退款响应结果
+        :param result: [dict]
+        :return:
+        """
+        try:
+            index = result.keys()[result.values().index(self.out_refund_no)].split('_')[-1]
+            self.query_result = repr(result) if result else None
+            self.query_result_code = result.get('result_code')
+            if self.query_result_code == 'SUCCESS':
+                self.refund_id = _nullable_strip(result.get('refund_id_%s' % index))
+                self.refund_status = _nullable_strip(result.get('refund_status_%s' % index))
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def dict_refund_result(self):
+        return eval(self.refund_result) if self.refund_result else {}
+
+    def dict_query_result(self):
+        return eval(self.query_result) if self.query_result else {}
 
 
 class User(BaseModel):

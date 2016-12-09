@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+import time
+
 from flask import current_app, url_for
 import requests
 import xmltodict
@@ -8,9 +10,9 @@ from utils.key_util import generate_random_key
 from utils.weixin_util import generate_pay_sign
 
 
-def unified_order(order):
+def place_order(order):
     """
-    微信支付统一下单
+    微信支付统一下单/提交刷卡支付
     :param order:
     :return:
     """
@@ -18,16 +20,23 @@ def unified_order(order):
         return
 
     wx = current_app.config['WEIXIN']
-    params = order.to_dict(only=('device_info', 'body', 'detail', 'attach', 'out_trade_no', 'fee_type', 'total_fee',
-                                 'spbill_create_ip', 'time_start', 'time_expire', 'goods_tag', 'trade_type',
-                                 'product_id', 'limit_pay', 'openid'))
+    if order.trade_type == 'MICROPAY':
+        wx_url = 'https://api.mch.weixin.qq.com/pay/micropay'
+        template = 'weixin/pay/micropay_order.xml'
+        params = order.to_dict(only=('device_info', 'body', 'detail', 'attach', 'out_trade_no', 'total_fee', 'fee_type',
+                                     'spbill_create_ip', 'goods_tag', 'auth_code'))
+    else:
+        wx_url = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
+        template = 'weixin/pay/unified_order.xml'
+        params = order.to_dict(only=('device_info', 'body', 'detail', 'attach', 'out_trade_no', 'fee_type', 'total_fee',
+                                     'spbill_create_ip', 'time_start', 'time_expire', 'goods_tag', 'trade_type',
+                                     'product_id', 'limit_pay', 'openid'))
+        params['notify_url'] = url_for('bp_www_main.weixin_pay_notify', _external=True)
     params['appid'] = wx.get('app_id')
     params['mch_id'] = wx.get('mch_id')
     params['nonce_str'] = generate_random_key(16)
-    params['notify_url'] = url_for('bp_www_main.weixin_pay_notify', _external=True)
     params['sign'] = generate_pay_sign(wx, params)
-    xml = current_app.jinja_env.get_template('weixin/pay/unified_order.xml').render(**params)
-    wx_url = 'https://api.mch.weixin.qq.com/pay/unifiedorder'
+    xml = current_app.jinja_env.get_template(template).render(**params)
     resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'})
     resp.encoding = 'utf-8'
     try:
@@ -47,18 +56,16 @@ def query_order(order):
     :return:
     """
     wx = current_app.config['WEIXIN']
+    wx_url = 'https://api.mch.weixin.qq.com/pay/orderquery'
+    template = 'weixin/pay/order_query.xml'
     params = {
         'appid': wx.get('app_id'),
         'mch_id': wx.get('mch_id'),
+        'out_trade_no': order.out_trade_no,
         'nonce_str': generate_random_key(16)
     }
-    if order.transaction_id:
-        params['transaction_id'] = order.transaction_id
-    else:
-        params['out_trade_no'] = order.out_trade_no
     params['sign'] = generate_pay_sign(wx, params)
-    xml = current_app.jinja_env.get_template('weixin/pay/order_query.xml').render(**params)
-    wx_url = 'https://api.mch.weixin.qq.com/pay/orderquery'
+    xml = current_app.jinja_env.get_template(template).render(**params)
     resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'})
     resp.encoding = 'utf-8'
     try:
@@ -71,13 +78,19 @@ def query_order(order):
         current_app.logger.info(resp.text)
 
 
-def close_order(order):
+def cancel_order(order):
     """
-    微信支付关闭订单
+    微信支付关闭/撤销订单
     :param order:
     :return:
     """
     wx = current_app.config['WEIXIN']
+    if order.trade_type == 'MICROPAY':
+        wx_url = 'https://api.mch.weixin.qq.com/secapi/pay/reverse'
+        template = 'weixin/pay/micropay_order_reverse.xml'
+    else:
+        wx_url = 'https://api.mch.weixin.qq.com/pay/closeorder'
+        template = 'weixin/pay/unified_order_close.xml'
     params = {
         'appid': wx.get('app_id'),
         'mch_id': wx.get('mch_id'),
@@ -85,15 +98,15 @@ def close_order(order):
         'nonce_str': generate_random_key(16)
     }
     params['sign'] = generate_pay_sign(wx, params)
-    xml = current_app.jinja_env.get_template('weixin/pay/unified_order_close.xml').render(**params)
-    wx_url = 'https://api.mch.weixin.qq.com/pay/closeorder'
-    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'})
+    xml = current_app.jinja_env.get_template(template).render(**params)
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'},
+                         cert=(wx.get('cert_path'), wx.get('key_path')))
     resp.encoding = 'utf-8'
     try:
         result = xmltodict.parse(resp.text)['xml']
         sign = result.pop('sign')
         assert sign == generate_pay_sign(wx, result), u'微信支付签名验证失败'
-        order.update_close_result(result)
+        order.update_cancel_result(result)
     except Exception, e:
         current_app.logger.error(e)
         current_app.logger.info(resp.text)
@@ -107,7 +120,14 @@ def update_order_state(order):
     """
     query_order(order)
     if order.trade_state == 'PAYERROR':
-        close_order(order)
-        if order.close_result_code == 'SUCCESS':
+        for n in range(0, 3):  # 最多尝试3次撤销订单
+            cancel_order(order)
+            if order.recall == 'Y':
+                time.sleep(5)  # 重试时间间隔为5秒钟
+            else:
+                break
+        if order.cancel_result_code == 'SUCCESS':
             query_order(order)
+        else:
+            current_app.logger.error(u'微信支付关闭/撤销订单失败')
     # TODO: 业务逻辑A
