@@ -810,7 +810,8 @@ class WeixinMchPay(BaseModel):
         """
         try:
             return cls.create(
-                partner_trade_no=generate_random_key(20, datetime.date.today().strftime('%Y%m%d'), 'd'),
+                partner_trade_no=generate_random_key(28, current_app.config['WEIXIN'].get('mch_id')
+                                                     + datetime.date.today().strftime('%Y%m%d'), 'd'),
                 openid=openid.strip(),
                 check_name=check_name.strip(),
                 amount=amount,
@@ -865,6 +866,143 @@ class WeixinMchPay(BaseModel):
 
     def dict_pay_result(self):
         return eval(self.pay_result) if self.pay_result else {}
+
+    def dict_query_result(self):
+        return eval(self.query_result) if self.query_result else {}
+
+
+class WeixinRedPack(BaseModel):
+    """
+    微信支付现金红包
+    """
+    mch_billno = CharField(max_length=32, unique=True)
+    send_name = CharField()
+    re_openid = CharField()
+    total_amount = IntegerField()
+    total_num = IntegerField()
+    wishing = CharField()
+    act_name = CharField()
+    remark = CharField()
+    amt_type = CharField(null=True)
+    client_ip = CharField(null=True)
+    scene_id = CharField(null=True)
+    risk_info = CharField(null=True)
+    consume_mch_id = CharField(null=True)
+
+    send_result = TextField(null=True)  # 发放红包响应结果
+    send_result_code = CharField(null=True)
+    send_listid = CharField(null=True)
+
+    query_result = TextField(null=True)  # 查询红包记录响应结果
+    query_result_code = CharField(null=True)
+    status = CharField(null=True)
+
+    class Meta:
+        db_table = 'weixin_red_pack'
+
+    @classmethod
+    def _exclude_fields(cls):
+        return BaseModel._exclude_fields() | {'send_result', 'query_result'}
+
+    @classmethod
+    def _extra_attributes(cls):
+        return BaseModel._extra_attributes() | {'dict_send_result', 'dict_query_result'}
+
+    @classmethod
+    def query_by_mch_billno(cls, mch_billno):
+        """
+        根据mch_billno查询
+        :param mch_billno:
+        :return:
+        """
+        pack = None
+        try:
+            pack = cls.get(cls.mch_billno == mch_billno)
+        finally:
+            return pack
+
+    @classmethod
+    def create_weixin_red_pack(cls, send_name, re_openid, total_amount, total_num, wishing, act_name, remark,
+                               amt_type=None, client_ip=None, scene_id=None, risk_info=None, consume_mch_id=None):
+        """
+        创建微信支付现金红包
+        :param send_name:
+        :param re_openid:
+        :param total_amount:
+        :param total_num:
+        :param wishing:
+        :param act_name:
+        :param remark:
+        :param amt_type:
+        :param client_ip:
+        :param scene_id:
+        :param risk_info:
+        :param consume_mch_id:
+        :return:
+        """
+        try:
+            return cls.create(
+                mch_billno=generate_random_key(28, current_app.config['WEIXIN'].get('mch_id')
+                                               + datetime.date.today().strftime('%Y%m%d'), 'd'),
+                send_name=send_name.strip(),
+                re_openid=re_openid.strip(),
+                total_amount=total_amount,
+                total_num=total_num,
+                wishing=wishing.strip(),
+                act_name=act_name.strip(),
+                remark=remark.strip(),
+                amt_type=_nullable_strip(amt_type),
+                client_ip=_nullable_strip(client_ip),
+                scene_id=_nullable_strip(scene_id),
+                risk_info=_nullable_strip(risk_info),
+                consume_mch_id=_nullable_strip(consume_mch_id)
+            )
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_send_result(self, result):
+        """
+        更新发放红包响应结果
+        :param result: [dict]
+        :return:
+        """
+        try:
+            self.send_result = repr(result) if result else None
+            self.send_result_code = result.get('result_code')
+            if self.send_result_code == 'SUCCESS':
+                self.send_listid = _nullable_strip(result.get('send_listid'))
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def update_query_result(self, result):
+        """
+        更新查询红包记录响应结果
+        :param result: [dict]
+        :return:
+        """
+        try:
+            self.query_result = repr(result) if result else None
+            self.query_result_code = result.get('result_code')
+            if self.query_result_code == 'SUCCESS':
+                self.send_listid = _nullable_strip(result.get('detail_id'))
+                self.status = _nullable_strip(result.get('status'))
+            self.update_time = datetime.datetime.now()
+            self.save()
+            return self
+
+        except Exception, e:
+            current_app.logger.error(e)
+            return None
+
+    def dict_send_result(self):
+        return eval(self.send_result) if self.send_result else {}
 
     def dict_query_result(self):
         return eval(self.query_result) if self.query_result else {}

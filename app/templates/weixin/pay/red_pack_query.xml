@@ -4,5 +4,5 @@
     <mch_billno><![CDATA[{{ mch_billno }}]]></mch_billno>
     <mch_id><![CDATA[{{ mch_id }}]]></mch_id>
     <appid><![CDATA[{{ appid }}]]></appid>
-    <bill_type><![CDATA[MCHT]]></bill_type>
+    <bill_type><![CDATA[{{ bill_type }}]]></bill_type>
 </xml>

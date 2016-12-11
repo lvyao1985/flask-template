@@ -286,3 +286,83 @@ def update_mch_pay_state(pay):
         current_app.logger.error(u'微信支付企业付款失败')
         apply_for_mch_pay(pay)
     # TODO: 业务逻辑C
+
+
+def send_red_pack(pack):
+    """
+    微信支付发放红包
+    :param pack:
+    :return:
+    """
+    if pack.send_result_code == 'SUCCESS':
+        return
+
+    wx = current_app.config['WEIXIN']
+    template = 'weixin/pay/red_pack.xml'
+    if pack.total_num == 1:
+        wx_url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/sendredpack'
+        params = pack.to_dict(only=('mch_billno', 'send_name', 're_openid', 'total_amount', 'total_num', 'wishing',
+                                    'client_ip', 'act_name', 'remark', 'scene_id', 'risk_info', 'consume_mch_id'))
+    else:
+        wx_url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/sendgroupredpack'
+        params = pack.to_dict(only=('mch_billno', 'send_name', 're_openid', 'total_amount', 'total_num', 'amt_type',
+                                    'wishing', 'act_name', 'remark', 'scene_id', 'risk_info', 'consume_mch_id'))
+    params['nonce_str'] = generate_random_key(16)
+    params['mch_id'] = wx.get('mch_id')
+    params['wxappid'] = wx.get('app_id')
+    params['sign'] = generate_pay_sign(wx, params)
+    xml = current_app.jinja_env.get_template(template).render(**params)
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'},
+                         cert=(wx.get('cert_path'), wx.get('key_path')))
+    resp.encoding = 'utf-8'
+    try:
+        result = xmltodict.parse(resp.text)['xml']
+        assert 'result_code' in result, result.get('return_msg')
+        pack.update_send_result(result)
+    except Exception, e:
+        current_app.logger.error(e)
+        current_app.logger.info(resp.text)
+
+
+def query_red_pack(pack):
+    """
+    微信支付查询红包记录
+    :param pack:
+    :return:
+    """
+    wx = current_app.config['WEIXIN']
+    wx_url = 'https://api.mch.weixin.qq.com/mmpaymkttransfers/gethbinfo'
+    template = 'weixin/pay/red_pack_query.xml'
+    params = {
+        'nonce_str': generate_random_key(16),
+        'mch_billno': pack.mch_billno,
+        'mch_id': wx.get('mch_id'),
+        'appid': wx.get('app_id'),
+        'bill_type': 'MCHT'
+    }
+    params['sign'] = generate_pay_sign(wx, params)
+    xml = current_app.jinja_env.get_template(template).render(**params)
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'},
+                         cert=(wx.get('cert_path'), wx.get('key_path')))
+    resp.encoding = 'utf-8'
+    try:
+        result = xmltodict.parse(resp.text)['xml']
+        assert 'result_code' in result, result.get('return_msg')
+        pack.update_query_result(result)
+    except Exception, e:
+        current_app.logger.error(e)
+        current_app.logger.info(resp.text)
+
+
+def update_red_pack_state(pack):
+    """
+    更新微信支付现金红包的状态
+    :param pack:
+    :return:
+    """
+    query_red_pack(pack)
+    status = pack.status
+    if status == 'FAILED':
+        current_app.logger.error(u'微信支付发放红包失败')
+        send_red_pack(pack)
+    # TODO: 业务逻辑D
