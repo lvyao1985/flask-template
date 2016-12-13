@@ -20,7 +20,7 @@ class BaseModel(Model):
     """
     所有model的基类
     """
-    id = PrimaryKeyField()
+    id = PrimaryKeyField()  # 主键
     create_time = DateTimeField(default=datetime.datetime.now)  # 创建时间
     update_time = DateTimeField(default=datetime.datetime.now)  # 更新时间
     weight = IntegerField(default=0)  # 排序权重
@@ -154,7 +154,6 @@ class BaseModel(Model):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def change_weight(self, weight):
         """
@@ -169,7 +168,6 @@ class BaseModel(Model):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def iso_create_time(self):
         return self.create_time.isoformat()
@@ -236,7 +234,6 @@ class Admin(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def check_password(self, password):
         """
@@ -260,7 +257,6 @@ class Admin(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def login(self, ip):
         """
@@ -276,7 +272,6 @@ class Admin(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def iso_last_login(self):
         return self.last_login.isoformat() if self.last_login else None
@@ -368,7 +363,6 @@ class WeixinUser(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_weixin_user(self, subscribe, unionid=None, nickname=None, sex=None, country=None, province=None,
                            city=None, headimgurl=None, subscribe_time=None, language=None, remark=None, groupid=None,
@@ -413,7 +407,6 @@ class WeixinUser(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def array_tagid_list(self):
         return map(int, self.tagid_list.split(',')) if self.tagid_list else []
@@ -534,7 +527,6 @@ class WeixinPayOrder(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_order_result(self, result):
         """
@@ -555,7 +547,6 @@ class WeixinPayOrder(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_notify_result(self, result):
         """
@@ -574,7 +565,6 @@ class WeixinPayOrder(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_query_result(self, result):
         """
@@ -595,7 +585,6 @@ class WeixinPayOrder(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_cancel_result(self, result):
         """
@@ -613,7 +602,6 @@ class WeixinPayOrder(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def dict_order_result(self):
         return eval(self.order_result) if self.order_result else {}
@@ -695,7 +683,6 @@ class WeixinPayRefund(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_refund_result(self, result):
         """
@@ -714,7 +701,6 @@ class WeixinPayRefund(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_query_result(self, result):
         """
@@ -735,7 +721,6 @@ class WeixinPayRefund(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def dict_refund_result(self):
         return eval(self.refund_result) if self.refund_result else {}
@@ -823,7 +808,6 @@ class WeixinMchPay(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_pay_result(self, result):
         """
@@ -842,7 +826,6 @@ class WeixinMchPay(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_query_result(self, result):
         """
@@ -862,7 +845,6 @@ class WeixinMchPay(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def dict_pay_result(self):
         return eval(self.pay_result) if self.pay_result else {}
@@ -960,7 +942,6 @@ class WeixinRedPack(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_send_result(self, result):
         """
@@ -979,7 +960,6 @@ class WeixinRedPack(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def update_query_result(self, result):
         """
@@ -999,7 +979,6 @@ class WeixinRedPack(BaseModel):
 
         except Exception, e:
             current_app.logger.error(e)
-            return None
 
     def dict_send_result(self):
         return eval(self.send_result) if self.send_result else {}

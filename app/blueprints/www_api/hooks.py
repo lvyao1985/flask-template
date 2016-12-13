@@ -34,7 +34,7 @@ def weixin_user_authentication():
     key = 'wx:user:%s:info' % g.user.id
     if redis_client.get(key) != 'off':
         redis_client.set(key, 'off')
-        redis_client.expire(key, 7200)  # 每隔两小时更新微信用户基本信息
+        redis_client.expire(key, 28800)  # 每隔八小时更新微信用户基本信息
         info = get_user_info(current_app.config['WEIXIN'], g.user.openid)
         if info:
             g.user.update_weixin_user(**info)

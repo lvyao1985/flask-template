@@ -1,6 +1,6 @@
 ## 系统环境变量设置
 
-    FLASK_CONFIG * (development|testing|production)
+    FLASK_CONFIG * [development|testing|production]
     FLASK_SECRET_KEY
     FLASK_MYSQL_USER
     FLASK_MYSQL_PASSWORD
@@ -8,7 +8,7 @@
     FLASK_REDIS_DB *
     FLASK_CELERY_BROKER *
     FLASK_CELERY_BACKEND *
-    FLASK_DES_KEY
+    DES_KEY (8 bytes)
     QINIU_ACCESS_KEY
     QINIU_SECRET_KEY
     QINIU_BUCKET

@@ -29,7 +29,7 @@ class APIException(Exception):
     """
     API异常
     """
-    ERRORS = {
+    ERRORS = {  # 错误码对应错误信息
         1000: 'Internal Server Error',
         1100: 'Bad Request',
         1101: 'Unauthorized',
@@ -45,12 +45,12 @@ class APIException(Exception):
         1801: u'微信access_token获取失败',
         1802: u'微信jsapi_ticket获取失败'
     }
-    status_code = 200
+    status_code = 200  # HTTP状态码
 
     def __init__(self, code, status_code=None):
         Exception.__init__(self)
-        self.code = code
-        self.message = self.ERRORS.get(code)
+        self.code = code  # 错误码
+        self.message = self.ERRORS.get(code)  # 错误信息
         if isinstance(status_code, int):
             self.status_code = status_code
 

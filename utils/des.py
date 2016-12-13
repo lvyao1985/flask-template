@@ -847,7 +847,7 @@ class triple_des(_baseDes):
         return self._unpadData(data, pad, padmode)
 
 
-key = os.getenv('FLASK_DES_KEY')
+key = os.getenv('DES_KEY')
 
 
 def encrypt(data):
