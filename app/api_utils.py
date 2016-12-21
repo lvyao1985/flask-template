@@ -10,6 +10,8 @@ __all__ = [
     'handle_api_exception',
     'handle_400_error',
     'handle_401_error',
+    'handle_403_error',
+    'handle_404_error',
     'handle_500_error',
     'before_api_request',
     'api_success_response',
@@ -88,6 +90,26 @@ def handle_401_error(e):
     :return:
     """
     e = APIException(1101)
+    return jsonify(e.to_dict()), e.status_code
+
+
+def handle_403_error(e):
+    """
+    处理403错误
+    :param e:
+    :return:
+    """
+    e = APIException(1103)
+    return jsonify(e.to_dict()), e.status_code
+
+
+def handle_404_error(e):
+    """
+    处理404错误
+    :param e:
+    :return:
+    """
+    e = APIException(1104)
     return jsonify(e.to_dict()), e.status_code
 
 
