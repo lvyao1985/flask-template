@@ -18,8 +18,18 @@ def is_alphabet(ustr):
 
 def check_phone(phone):
     """
-    检查手机号码是否正确
+    检查手机号码格式是否正确
     :param phone:
     :return:
     """
     return bool(re.match(r'1[34578]\d{9}$', phone))
+
+
+def check_id_card(id_card):
+    """
+    检查身份证号码格式是否正确
+    :param id_card:
+    :return:
+    """
+    return bool(re.match(r'[1-9]\d{5}[12]\d{3}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[0-9xX]$', id_card)
+                or re.match(r'[1-9]\d{7}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}$', id_card))
