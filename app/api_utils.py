@@ -45,7 +45,11 @@ class APIException(Exception):
         1602: u'DELETE方法url参数值错误',
         1800: u'微信公众平台接口调用失败',
         1801: u'微信access_token获取失败',
-        1802: u'微信jsapi_ticket获取失败'
+        1802: u'微信jsapi_ticket获取失败',
+        1803: u'微信素材获取失败',
+        1850: u'七牛上传凭证获取失败',
+        1851: u'七牛上传二进制流失败',
+        1852: u'七牛上传文件失败'
     }
     status_code = 200  # HTTP状态码
 
