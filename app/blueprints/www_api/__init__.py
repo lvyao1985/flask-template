@@ -18,4 +18,4 @@ bp_www_api.before_request(before_api_request)
 # TODO: 请求前钩子函数，可从.hooks中选择
 
 
-from . import qiniu, weixin
+from . import weixin
