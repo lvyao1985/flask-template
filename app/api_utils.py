@@ -138,7 +138,7 @@ def before_api_request():
             abort(400)
 
         g.json = request.get_json()  # g.json
-        current_app.logger.info(u'JSON: %s' % g.json)
+        current_app.logger.info(u'JSON -> %s: %s' % (request.endpoint, g.json))
     fields = request.args.get('fields')
     g.fields = fields.split(',') if fields else None  # g.fields
 

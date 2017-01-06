@@ -131,7 +131,7 @@ def update_order_state(order):
             query_order(order)
         else:
             current_app.logger.error(u'微信支付关闭/撤销订单失败')
-    # TODO: 业务逻辑A
+    # TODO: 业务逻辑A'
 
 
 def apply_for_refund(refund):
@@ -221,7 +221,7 @@ def apply_for_mch_pay(pay):
     :param pay:
     :return:
     """
-    if pay.pay_result_code == 'SUCCESS':
+    if pay.status in ['SUCCESS', 'PROCESSING']:
         return
 
     wx = current_app.config['WEIXIN']
@@ -294,7 +294,7 @@ def send_red_pack(pack):
     :param pack:
     :return:
     """
-    if pack.send_result_code == 'SUCCESS':
+    if pack.status in ['SENDING', 'SENT', 'RECEIVED', 'RFUND_ING', 'REFUND']:
         return
 
     wx = current_app.config['WEIXIN']

@@ -8,7 +8,7 @@ import xmltodict
 
 from . import bp_www_main
 from ...models import WeixinUser, WeixinPayOrder
-from ...constants import WEIXIN_USER_COOKIE_KEY, LOGIN_MAXAGE_DAYS
+from ...constants import WEIXIN_USER_COOKIE_KEY, LOGIN_VALID_DAYS
 from utils.des import encrypt
 from utils.qiniu_util import get_upload_token
 from utils.weixin_util import get_user_info_with_authorization, generate_pay_sign
@@ -59,7 +59,7 @@ def weixin_user_login():
     if not weixin_user:
         return resp
 
-    resp.set_cookie(WEIXIN_USER_COOKIE_KEY, value=encrypt(str(weixin_user.id)), max_age=86400 * LOGIN_MAXAGE_DAYS)
+    resp.set_cookie(WEIXIN_USER_COOKIE_KEY, value=encrypt(str(weixin_user.id)), max_age=86400 * LOGIN_VALID_DAYS)
     return resp
 
 
@@ -80,9 +80,9 @@ def weixin_pay_notify():
         current_app.logger.info(request.data)
         return make_response(template.render(return_code='FAIL', return_msg=e.message))
 
-    order = WeixinPayOrder.query_by_out_trade_no(out_trade_no)
-    if order and not order.notify_result_code:
-        order.update_notify_result(result)
+    wx_pay_order = WeixinPayOrder.query_by_out_trade_no(out_trade_no)
+    if wx_pay_order and not wx_pay_order.notify_result_code:
+        wx_pay_order.update_notify_result(result)
         # TODO: 业务逻辑A
     return make_response(template.render(return_code='SUCCESS'))
 

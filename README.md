@@ -22,3 +22,25 @@
     WEIXIN_PAY_KEY
     WEIXIN_CERT_PATH
     WEIXIN_KEY_PATH
+
+## Model Dependencies
+
+_- : on_delete='CASCADE'_
+
+_* : on_delete='CASCADE', null=True_
+
+**Admin**
+
+**WeixinUser**
+
+**WeixinPayOrder**
+
+    - : WeixinPayRefund
+
+**WeixinPayRefund**
+
+**WeixinMchPay**
+
+**WeixinRedPack**
+
+**User**

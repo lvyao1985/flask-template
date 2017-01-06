@@ -75,6 +75,7 @@ class Config:
         file_handler.setFormatter(
             logging.Formatter(u'[%(asctime)s] - %(pathname)s (%(lineno)s) - [%(levelname)s] - %(message)s'))
         app.logger.addHandler(file_handler)
+        app.logger.setLevel(logging.INFO)
 
 
 class DevelopmentConfig(Config):

@@ -557,8 +557,7 @@ class WeixinPayOrder(BaseModel):
         try:
             self.notify_result = repr(result) if result else None
             self.notify_result_code = result.get('result_code')
-            if self.notify_result_code == 'SUCCESS':
-                self.transaction_id = _nullable_strip(result.get('transaction_id'))
+            self.transaction_id = result.get('transaction_id')
             self.update_time = datetime.datetime.now()
             self.save()
             return self
@@ -693,8 +692,7 @@ class WeixinPayRefund(BaseModel):
         try:
             self.refund_result = repr(result) if result else None
             self.refund_result_code = result.get('result_code')
-            if self.refund_result_code == 'SUCCESS':
-                self.refund_id = _nullable_strip(result.get('refund_id'))
+            self.refund_id = result.get('refund_id')
             self.update_time = datetime.datetime.now()
             self.save()
             return self
@@ -712,9 +710,7 @@ class WeixinPayRefund(BaseModel):
             index = result.keys()[result.values().index(self.out_refund_no)].split('_')[-1]
             self.query_result = repr(result) if result else None
             self.query_result_code = result.get('result_code')
-            if self.query_result_code == 'SUCCESS':
-                self.refund_id = _nullable_strip(result.get('refund_id_%s' % index))
-                self.refund_status = _nullable_strip(result.get('refund_status_%s' % index))
+            self.refund_status = result.get('refund_status_%s' % index)
             self.update_time = datetime.datetime.now()
             self.save()
             return self

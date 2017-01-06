@@ -6,8 +6,8 @@ import hashlib
 
 import requests
 
-from app import redis_client
 from .key_util import generate_random_key
+from app import redis_client
 
 
 def get_access_token(wx):
