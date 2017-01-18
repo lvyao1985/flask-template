@@ -263,7 +263,8 @@ def query_mch_pay(pay):
     }
     params['sign'] = generate_pay_sign(wx, params)
     xml = current_app.jinja_env.get_template(template).render(**params)
-    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'})
+    resp = requests.post(wx_url, data=xml.encode('utf-8'), headers={'Content-Type': 'application/xml; charset="utf-8"'},
+                         cert=(wx.get('cert_path'), wx.get('key_path')))
     resp.encoding = 'utf-8'
     try:
         result = xmltodict.parse(resp.text)['xml']
