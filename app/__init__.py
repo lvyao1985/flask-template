@@ -3,6 +3,7 @@
 from flask import Flask
 from peewee import MySQLDatabase
 from redis import StrictRedis
+from celery import Celery
 
 from config import Config, config
 
@@ -42,3 +43,28 @@ def create_app(config_name):
     app.register_blueprint(bp_cms_api, subdomain=app.config['SUBDOMAIN'].get('cms_api'), url_prefix='/api')
 
     return app
+
+
+def create_celery_app(app=None):
+    """
+    创建celery应用对象
+    :param app:
+    :return:
+    """
+    import os
+    app = app or create_app(os.getenv('FLASK_CONFIG') or 'default')
+    celery = Celery(app.import_name)
+    celery.conf.update(app.config)
+
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        abstract = True
+
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    celery.Task = ContextTask
+
+    return celery

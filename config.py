@@ -9,7 +9,7 @@ class Config:
     """
     配置
     """
-    _project_name = 'flask_template'  # TODO: 项目名称
+    _project_name = 'flask-template'  # TODO: 项目名称
     SECRET_KEY = environ.get('FLASK_SECRET_KEY')
 
     # mysql
@@ -19,7 +19,7 @@ class Config:
         'port': 3306,
         'user': environ.get('FLASK_MYSQL_USER'),
         'password': environ.get('FLASK_MYSQL_PASSWORD'),
-        'database': environ.get('FLASK_MYSQL_DB') or _project_name
+        'database': environ.get('FLASK_MYSQL_DB') or _project_name.replace('-', '_')
     }
 
     # redis
@@ -30,8 +30,10 @@ class Config:
     }
 
     # celery
-    BROKER_URL = 'redis://localhost:6379/%s' % (environ.get('FLASK_CELERY_BROKER') or 1)
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379/%s' % (environ.get('FLASK_CELERY_BACKEND') or 2)
+    BROKER_URL = 'amqp://%s:%s@localhost:5672/%s' % (environ.get('CELERY_BROKER_USER'),
+                                                     environ.get('CELERY_BROKER_PASSWORD'),
+                                                     environ.get('CELERY_BROKER_VHOST') or _project_name)
+    CELERY_RESULT_BACKEND = 'redis://localhost:6379/%s' % (environ.get('CELERY_BACKEND_DB') or 0)
 
     # 七牛
     QINIU = {
@@ -54,6 +56,7 @@ class Config:
         'app_id': environ.get('WEIXIN_APP_ID'),
         'app_secret': environ.get('WEIXIN_APP_SECRET'),
         'token': environ.get('WEIXIN_TOKEN'),
+        'aes_key': environ.get('WEIXIN_AES_KEY'),
         'mch_id': environ.get('WEIXIN_MCH_ID'),
         'pay_key': environ.get('WEIXIN_PAY_KEY'),
         'cert_path': environ.get('WEIXIN_CERT_PATH'),
