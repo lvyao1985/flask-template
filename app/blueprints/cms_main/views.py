@@ -4,7 +4,7 @@ from flask import request, session, g, url_for, redirect, flash, render_template
 
 from . import bp_cms_main
 from ...models import Admin
-from ...constants import CMS_ADMIN_SESSION_KEY
+from ...constants import ADMIN_SESSION_KEY
 
 
 @bp_cms_main.route('/', methods=['GET'])
@@ -29,7 +29,7 @@ def login():
         name, password = map(request.form.get, ('name', 'password'))
         admin = Admin.query_by_name(name)
         if admin and admin.check_password(password):
-            session[CMS_ADMIN_SESSION_KEY] = admin.id
+            session[ADMIN_SESSION_KEY] = admin.id
             admin.login(g.ip)
             flash(u'登录成功', 'info')
             return redirect(url_for('.index'))
@@ -44,5 +44,5 @@ def logout():
     管理员退出
     :return:
     """
-    session.pop(CMS_ADMIN_SESSION_KEY, None)
+    session.pop(ADMIN_SESSION_KEY, None)
     return redirect(url_for('.login'))

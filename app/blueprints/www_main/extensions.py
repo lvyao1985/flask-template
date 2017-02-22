@@ -8,7 +8,7 @@ import xmltodict
 
 from . import bp_www_main
 from ...models import WeixinUser, WeixinPayOrder
-from ...constants import WEIXIN_USER_COOKIE_KEY, LOGIN_VALID_DAYS
+from ...constants import WEIXIN_USER_COOKIE_KEY, USER_LOGIN_VALID_DAYS
 from utils.des import encrypt
 from utils.qiniu_util import get_upload_token
 from utils.weixin_util import get_user_info_with_authorization, generate_pay_sign
@@ -59,7 +59,7 @@ def weixin_user_login():
     if not weixin_user:
         return resp
 
-    resp.set_cookie(WEIXIN_USER_COOKIE_KEY, value=encrypt(str(weixin_user.id)), max_age=86400 * LOGIN_VALID_DAYS)
+    resp.set_cookie(WEIXIN_USER_COOKIE_KEY, value=encrypt(str(weixin_user.id)), max_age=86400 * USER_LOGIN_VALID_DAYS)
     return resp
 
 

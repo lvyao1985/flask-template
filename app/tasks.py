@@ -11,7 +11,7 @@ celery = create_celery_app()
 @task_prerun.connect()
 def celery_prerun(sender=None, task=None, task_id=None, *args, **kwargs):
     """
-    celery任务执行前运行
+    celery任务执行前钩子函数
     :param sender:
     :param task:
     :param task_id:
@@ -25,7 +25,7 @@ def celery_prerun(sender=None, task=None, task_id=None, *args, **kwargs):
 @task_postrun.connect()
 def celery_postrun(sender=None, task=None, task_id=None, retval=None, state=None, *args, **kwargs):
     """
-    celery任务执行后运行
+    celery任务执行后钩子函数
     :param sender:
     :param task:
     :param task_id:
