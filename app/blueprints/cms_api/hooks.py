@@ -14,7 +14,7 @@ from utils.des import decrypt
 #     管理员身份认证
 #     :return:
 #     """
-#     g.admin = Admin.query_by_id(session.get(CMS_ADMIN_SESSION_KEY))  # g.admin
+#     g.admin = Admin.query_by_id(session.get(ADMIN_SESSION_KEY))  # g.admin
 #     if not g.admin:
 #         abort(401)
 
