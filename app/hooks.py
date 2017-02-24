@@ -14,7 +14,8 @@ def before_app_request():
         abort(404)
 
     g.ip = request.environ.get('HTTP_X_FORWARDED_FOR') or request.environ.get('REMOTE_ADDR')  # g.ip
-    db.connect()
+    if db.is_closed():
+        db.connect()
 
 
 def after_app_request(resp):

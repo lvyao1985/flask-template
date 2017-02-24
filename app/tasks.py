@@ -19,7 +19,8 @@ def celery_prerun(sender=None, task=None, task_id=None, *args, **kwargs):
     :param kwargs:
     :return:
     """
-    db.connect()
+    if db.is_closed():
+        db.connect()
 
 
 @task_postrun.connect()
