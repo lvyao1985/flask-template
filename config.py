@@ -34,6 +34,9 @@ class Config:
                                                      environ.get('CELERY_BROKER_PASSWORD'),
                                                      environ.get('CELERY_BROKER_VHOST') or _project_name)
     CELERY_RESULT_BACKEND = 'redis://localhost:6379/%s' % (environ.get('CELERY_BACKEND_DB') or 0)
+    CELERY_TASK_SERIALIZER = 'pickle'
+    CELERY_ACCEPT_CONTENT = ['pickle']
+    CELERY_RESULT_SERIALIZER = 'pickle'
 
     # 七牛
     QINIU = {
