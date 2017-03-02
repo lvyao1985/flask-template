@@ -8,6 +8,7 @@ from .api_utils import *
 __all__ = [
     'list_objects',
     'get_object',
+    'update_object_weight',
     'delete_object',
     'delete_objects'
 ]
@@ -44,6 +45,26 @@ def get_object(_id, model, mark='object'):
 
     data = {
         mark: obj.to_dict(g.fields)
+    }
+    return api_success_response(data)
+
+
+def update_object_weight(_id, model, mark='object'):
+    """
+    修改对象权重
+    :param _id:
+    :param model:
+    :param mark:
+    :return:
+    """
+    weight = g.json.get('weight')
+    obj = model.query_by_id(_id)
+    claim_args(1104, obj)
+    claim_args(1401, weight)
+    claim_args_int(1402, weight)
+
+    data = {
+        mark: obj.change_weight(weight).to_dict(g.fields)
     }
     return api_success_response(data)
 
